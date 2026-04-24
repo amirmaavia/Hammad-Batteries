@@ -174,10 +174,10 @@ export default function AdminPage() {
                   </button>
                 </form>
 
-                <div className="admin-login-help">
+                {/* <div className="admin-login-help">
                   <p><strong>Username:</strong> admin</p>
                   <p><strong>Password:</strong> admin123</p>
-                </div>
+                </div> */}
               </div>
             </div>
           </section>
