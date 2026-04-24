@@ -26,6 +26,7 @@ export default function Navbar() {
                     {/* <Link href="/admin" className="btn btn-admin">
                         Admin
                     </Link> */}
+                    <div className='ml-2'>
                     <a
                         href={getWhatsAppLink("Assalam o Alaikum, I want to ask about batteries.")}
                         target="_blank"
@@ -37,6 +38,7 @@ export default function Navbar() {
                         <MessageCircle size={18} />
                         <span className="btn-text">Contact on WhatsApp</span>
                     </a>
+                    </div>
                 </div>
             </div>
         </header>
