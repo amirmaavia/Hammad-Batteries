@@ -5,6 +5,7 @@ export type CatalogItem = {
   subCategory: string;
   price: string;
   stock: string;
+  image?: string;
 };
 
 export const DEFAULT_ITEMS: CatalogItem[] = [
@@ -15,6 +16,7 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     subCategory: "S Series",
     price: "Rs. 14,999",
     stock: "In Stock",
+    image: "",
   },
   {
     id: 2,
@@ -23,6 +25,7 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     subCategory: "Note Series",
     price: "Rs. 10,500",
     stock: "In Stock",
+    image: "",
   },
   {
     id: 3,
@@ -31,6 +34,7 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     subCategory: "A Series",
     price: "Rs. 8,999",
     stock: "In Stock",
+    image: "",
   },
   {
     id: 4,
@@ -39,6 +43,7 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     subCategory: "Pro Max Series",
     price: "Rs. 18,500",
     stock: "Out of Stock",
+    image: "",
   },
 ];
 
@@ -62,7 +67,7 @@ export function loadCatalogItems(): CatalogItem[] {
       return DEFAULT_ITEMS;
     }
 
-    return parsedItems;
+    return parsedItems.map(normalizeCatalogItem).filter(Boolean) as CatalogItem[];
   } catch {
     return DEFAULT_ITEMS;
   }
@@ -74,4 +79,20 @@ export function saveCatalogItems(items: CatalogItem[]) {
   }
 
   window.localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(items));
+}
+
+function normalizeCatalogItem(item: CatalogItem): CatalogItem | null {
+  if (!item || typeof item !== "object") {
+    return null;
+  }
+
+  return {
+    id: Number(item.id),
+    name: typeof item.name === "string" ? item.name : "",
+    brand: typeof item.brand === "string" ? item.brand : "",
+    subCategory: typeof item.subCategory === "string" ? item.subCategory : "",
+    price: typeof item.price === "string" ? item.price : "",
+    stock: typeof item.stock === "string" ? item.stock : "",
+    image: typeof item.image === "string" ? item.image : "",
+  };
 }

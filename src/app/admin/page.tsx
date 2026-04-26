@@ -1,11 +1,13 @@
 'use client';
 
-import React, { FormEvent, useMemo, useState } from 'react';
+import React, { ChangeEvent, FormEvent, useMemo, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { CatalogItem, DEFAULT_ITEMS, loadCatalogItems, saveCatalogItems } from '../../lib/catalog';
 import { DISPLAY_PHONE_NUMBER, getWhatsAppLink } from '../../lib/site';
-import { Headphones, LockKeyhole, LogOut, Pencil, Plus, RotateCcw, Save, Trash2, X } from 'lucide-react';
+import { Headphones, ImagePlus, LockKeyhole, LogOut, Pencil, Plus, RotateCcw, Save, Trash2, X } from 'lucide-react';
 
 type ItemForm = {
   name: string;
@@ -13,6 +15,7 @@ type ItemForm = {
   subCategory: string;
   price: string;
   stock: string;
+  image: string;
 };
 
 const EMPTY_FORM: ItemForm = {
@@ -21,6 +24,7 @@ const EMPTY_FORM: ItemForm = {
   subCategory: '',
   price: '',
   stock: '',
+  image: '',
 };
 
 const ADMIN_AUTH_KEY = 'hammad-batteries-admin-auth';
@@ -47,6 +51,36 @@ export default function AdminPage() {
     [items]
   );
 
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      window.alert('Please choose an image file only.');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > 1024 * 1024) {
+      window.alert('Please use an image smaller than 1 MB.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      setForm((currentForm) => ({ ...currentForm, image: result }));
+      event.target.value = '';
+    };
+
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -56,6 +90,7 @@ export default function AdminPage() {
       subCategory: form.subCategory.trim(),
       price: form.price.trim(),
       stock: form.stock.trim(),
+      image: form.image,
     };
 
     if (!cleanItem.name || !cleanItem.brand || !cleanItem.subCategory || !cleanItem.price || !cleanItem.stock) {
@@ -80,6 +115,7 @@ export default function AdminPage() {
       subCategory: item.subCategory,
       price: item.price,
       stock: item.stock,
+      image: item.image ?? '',
     });
     setEditingId(item.id);
   };
@@ -247,6 +283,30 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  <div className="form-group">
+                    <label className="form-label">Product Picture</label>
+                    <label className="image-upload-box">
+                      <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                      <ImagePlus size={20} />
+                      <span>{form.image ? 'Change product image' : 'Upload product image'}</span>
+                    </label>
+                    <p className="upload-help-text">Use JPG, PNG, or WebP. Max size: 1 MB.</p>
+
+                    {form.image ? (
+                      <div className="admin-image-preview-wrap">
+                        <Image src={form.image} alt="Preview" width={320} height={240} unoptimized className="admin-image-preview" />
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          onClick={() => setForm({ ...form, image: '' })}
+                        >
+                          <X size={16} />
+                          Remove Picture
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
                   <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                     <button type="submit" className="btn btn-primary btn-mobile-icon" aria-label={editingId === null ? 'Add item' : 'Save changes'} title={editingId === null ? 'Add item' : 'Save changes'}>
                       {editingId === null ? <Plus size={18} /> : <Save size={18} />}
@@ -281,6 +341,15 @@ export default function AdminPage() {
                 <div style={{ display: 'grid', gap: '1rem' }}>
                   {sortedItems.map((item) => (
                     <div key={item.id} style={{ border: '1px solid var(--card-border)', borderRadius: '12px', padding: '1rem', background: 'var(--surface-soft)' }}>
+                      {item.image ? (
+                        <Image src={item.image} alt={item.name} width={640} height={360} unoptimized className="admin-item-thumb" />
+                      ) : (
+                        <div className="admin-item-thumb admin-item-thumb-fallback">
+                          <ImagePlus size={22} />
+                          <span>No picture</span>
+                        </div>
+                      )}
+
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.75rem' }}>
                         <div>
                           <h3 style={{ fontSize: '1.1rem', marginBottom: '0.35rem' }}>{item.name}</h3>
@@ -295,6 +364,9 @@ export default function AdminPage() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center' }}>
                         <strong className="price">{item.price}</strong>
                         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          <Link href={`/items/${item.id}`} className="btn btn-outline btn-mobile-icon" title="View details">
+                            <span className="btn-text">View</span>
+                          </Link>
                           <button type="button" className="btn btn-outline btn-mobile-icon" onClick={() => handleEdit(item)} aria-label={`Edit ${item.name}`} title="Edit">
                             <Pencil size={16} />
                             <span className="btn-text">Edit</span>

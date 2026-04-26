@@ -21,7 +21,7 @@ export default function Navbar() {
                     {/* <Link href="/admin" className="nav-link">Admin Panel</Link> */}
                 </nav>
 
-                <div className="">
+                <div style={{display: "flex", gap: "0.2rem"}}>
                     <ThemeToggle />
                     {/* <Link href="/admin" className="btn btn-admin">
                         Admin
@@ -30,7 +30,7 @@ export default function Navbar() {
                         href={getWhatsAppLink("Assalam o Alaikum, I want to ask about batteries.")}
                         target="_blank"
                         rel="noreferrer"
-                        className="btn btn-whatsapp btn-mobile-icon"
+                        className="btn btn-whatsapp btn-mobile-icon "
                         aria-label="Contact on WhatsApp"
                         title="Contact on WhatsApp"
                     >

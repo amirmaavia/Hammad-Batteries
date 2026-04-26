@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ArrowRight, MessageCircle, Smartphone, Zap, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, MessageCircle, Smartphone, Zap, CheckCircle2, ImageOff } from 'lucide-react';
 import { CatalogItem, loadCatalogItems } from '../lib/catalog';
 import { getWhatsAppLink } from '../lib/site';
 
 export default function Home() {
+  const router = useRouter();
   const [models] = useState<CatalogItem[]>(() => loadCatalogItems());
 
   const groupedBrands = models.reduce<Record<string, string[]>>((accumulator, model) => {
@@ -99,10 +102,31 @@ export default function Home() {
 
             <div className="grid grid-cols-3">
               {models.map((model) => (
-                <div key={model.id} className="card" style={{ animation: 'fade-in 0.5s ease-out' }}>
+                <div
+                  key={model.id}
+                  className="card product-card-link"
+                  style={{ animation: 'fade-in 0.5s ease-out' }}
+                  onClick={() => router.push(`/items/${model.id}`)}
+                  role="link"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      router.push(`/items/${model.id}`);
+                    }
+                  }}
+                >
                   <div className="card-tag">
                     {model.stock}
                   </div>
+                  {model.image ? (
+                    <Image src={model.image} alt={model.name} width={640} height={480} unoptimized className="product-card-image" />
+                  ) : (
+                    <div className="product-card-image product-card-fallback">
+                      <ImageOff size={36} />
+                      <span>No image</span>
+                    </div>
+                  )}
                   <div>
                     <span className={`badge ${model.brand === 'Samsung' ? 'badge-samsung' : 'badge-apple'}`}>
                       {model.brand}
@@ -114,7 +138,16 @@ export default function Home() {
                   <h3 className="card-title" style={{ marginTop: '1rem', fontSize: '1.4rem' }}>{model.name}</h3>
                   <div className="card-footer">
                     <span className="price">{model.price}</span>
-                    <a href={getWhatsAppLink(`Assalam o Alaikum, I'm interested in ${model.name}`)} target="_blank" rel="noreferrer" className="btn btn-mobile-icon" style={{ padding: '0.5rem 1rem', background: 'var(--success-soft)', color: '#10b981' }} aria-label={`Ask about ${model.name} on WhatsApp`} title="Ask on WhatsApp">
+                    <a
+                      href={getWhatsAppLink(`Assalam o Alaikum, I'm interested in ${model.name}`)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-mobile-icon"
+                      style={{ padding: '0.5rem 1rem', background: 'var(--success-soft)', color: '#10b981' }}
+                      aria-label={`Ask about ${model.name} on WhatsApp`}
+                      title="Ask on WhatsApp"
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       <MessageCircle size={16} />
                       <span className="btn-text">Ask on WA</span>
                     </a>
