@@ -8,6 +8,7 @@ import Footer from '../../../components/Footer';
 import { ArrowLeft, BadgeInfo, ImageOff, MessageCircle, PackageCheck, Smartphone, Tag } from 'lucide-react';
 import { CatalogItem, loadCatalogItems } from '../../../lib/catalog';
 import { getWhatsAppLink } from '../../../lib/site';
+import { useEffect, useState } from 'react';
 
 function ItemImage({ item }: { item: CatalogItem }) {
   if (item.image) {
@@ -24,8 +25,24 @@ function ItemImage({ item }: { item: CatalogItem }) {
 
 export default function ItemDetailPage() {
   const params = useParams<{ id: string }>();
-  const itemId = Number(params.id);
-  const item = loadCatalogItems().find((entry) => entry.id === itemId);
+  const itemId = params.id; // Keep as string for _id comparison
+  const [item, setItem] = useState<CatalogItem | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadItem = async () => {
+      setLoading(true);
+      const items = await loadCatalogItems();
+      const foundItem = items.find((entry) => {
+        const entryId = entry._id?.toString() || entry.id?.toString();
+        return entryId === itemId;
+      });
+      setItem(foundItem);
+      setLoading(false);
+    };
+
+    loadItem();
+  }, [itemId]);
 
   return (
     <>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
@@ -11,7 +11,19 @@ import { getWhatsAppLink } from '../lib/site';
 
 export default function Home() {
   const router = useRouter();
-  const [models] = useState<CatalogItem[]>(() => loadCatalogItems());
+  const [models, setModels] = useState<CatalogItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadItems = async () => {
+      setLoading(true);
+      const items = await loadCatalogItems();
+      setModels(items);
+      setLoading(false);
+    };
+
+    loadItems();
+  }, []);
 
   const groupedBrands = models.reduce<Record<string, string[]>>((accumulator, model) => {
     if (!accumulator[model.brand]) {
@@ -103,16 +115,16 @@ export default function Home() {
             <div className="grid grid-cols-3">
               {models.map((model) => (
                 <div
-                  key={model.id}
+                  key={model._id}
                   className="card product-card-link"
                   style={{ animation: 'fade-in 0.5s ease-out' }}
-                  onClick={() => router.push(`/items/${model.id}`)}
+                  onClick={() => router.push(`/items/${model._id}`)}
                   role="link"
                   tabIndex={0}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
-                      router.push(`/items/${model.id}`);
+                      router.push(`/items/${model._id}`);
                     }
                   }}
                 >

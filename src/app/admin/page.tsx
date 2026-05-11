@@ -1,11 +1,11 @@
 'use client';
 
-import React, { ChangeEvent, FormEvent, useMemo, useState } from 'react';
+import React, { ChangeEvent, FormEvent, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { CatalogItem, DEFAULT_ITEMS, loadCatalogItems, saveCatalogItems } from '../../lib/catalog';
+import { CatalogItem, DEFAULT_ITEMS, loadCatalogItems, saveCatalogItems, deleteItemFromCatalog } from '../../lib/catalog';
 import { DISPLAY_PHONE_NUMBER, getWhatsAppLink } from '../../lib/site';
 import { Headphones, ImagePlus, LockKeyhole, LogOut, Pencil, Plus, RotateCcw, Save, Trash2, X } from 'lucide-react';
 
@@ -32,9 +32,9 @@ const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'admin123';
 
 export default function AdminPage() {
-  const [items, setItems] = useState<CatalogItem[]>(() => loadCatalogItems());
+  const [items, setItems] = useState<CatalogItem[]>(DEFAULT_ITEMS);
   const [form, setForm] = useState<ItemForm>(EMPTY_FORM);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -45,9 +45,25 @@ export default function AdminPage() {
 
     return window.localStorage.getItem(ADMIN_AUTH_KEY) === 'true';
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadItems = async () => {
+      setLoading(true);
+      const loadedItems = await loadCatalogItems();
+      setItems(loadedItems);
+      setLoading(false);
+    };
+
+    loadItems();
+  }, []);
 
   const sortedItems = useMemo(
-    () => [...items].sort((firstItem, secondItem) => secondItem.id - firstItem.id),
+    () => [...items].sort((firstItem, secondItem) => {
+      const firstId = (firstItem._id?.toString() || firstItem.id || 0) as any;
+      const secondId = (secondItem._id?.toString() || secondItem.id || 0) as any;
+      return secondId - firstId;
+    }),
     [items]
   );
 
@@ -81,7 +97,7 @@ export default function AdminPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const cleanItem = {
@@ -97,13 +113,20 @@ export default function AdminPage() {
       return;
     }
 
-    const updatedItems =
-      editingId === null
-        ? [{ id: Date.now(), ...cleanItem }, ...items]
-        : items.map((item) => (item.id === editingId ? { ...item, ...cleanItem } : item));
+    if (editingId === null) {
+      const updatedItems = [{ ...cleanItem }, ...items];
+      await saveCatalogItems(updatedItems);
+    } else {
+      const updatedItems = items.map((item) => {
+        const itemId = item._id ? item._id.toString() : item.id?.toString();
+        const editId = editingId.toString();
+        return itemId === editId ? { ...item, ...cleanItem } : item;
+      });
+      await saveCatalogItems(updatedItems);
+    }
 
-    setItems(updatedItems);
-    saveCatalogItems(updatedItems);
+    const reloadedItems = await loadCatalogItems();
+    setItems(reloadedItems);
     setForm(EMPTY_FORM);
     setEditingId(null);
   };
@@ -117,13 +140,24 @@ export default function AdminPage() {
       stock: item.stock,
       image: item.image ?? '',
     });
-    setEditingId(item.id);
+    const id = item._id ? item._id.toString() : item.id;
+    if (id) {
+      setEditingId(id);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    const updatedItems = items.filter((item) => item.id !== id);
-    setItems(updatedItems);
-    saveCatalogItems(updatedItems);
+  const handleDelete = async (id: string | number) => {
+    const itemToDelete = items.find((item) => {
+      const itemId = item._id ? item._id.toString() : item.id;
+      return itemId === id || itemId === id.toString();
+    });
+
+    if (itemToDelete?._id) {
+      await deleteItemFromCatalog(itemToDelete._id.toString());
+    }
+
+    const reloadedItems = await loadCatalogItems();
+    setItems(reloadedItems);
 
     if (editingId === id) {
       setEditingId(null);
@@ -131,9 +165,10 @@ export default function AdminPage() {
     }
   };
 
-  const handleReset = () => {
-    setItems(DEFAULT_ITEMS);
-    saveCatalogItems(DEFAULT_ITEMS);
+  const handleReset = async () => {
+    await saveCatalogItems(DEFAULT_ITEMS);
+    const reloadedItems = await loadCatalogItems();
+    setItems(reloadedItems);
     setEditingId(null);
     setForm(EMPTY_FORM);
   };
@@ -371,7 +406,10 @@ export default function AdminPage() {
                             <Pencil size={16} />
                             <span className="btn-text">Edit</span>
                           </button>
-                          <button type="button" className="btn btn-mobile-icon" style={{ background: 'var(--danger-soft)', color: 'var(--danger)' }} onClick={() => handleDelete(item.id)} aria-label={`Delete ${item.name}`} title="Delete">
+                          <button type="button" className="btn btn-mobile-icon" style={{ background: 'var(--danger-soft)', color: 'var(--danger)' }} onClick={() => {
+                            const id = item._id ? item._id.toString() : item.id;
+                            if (id) handleDelete(id);
+                          }} aria-label={`Delete ${item.name}`} title="Delete">
                             <Trash2 size={16} />
                             <span className="btn-text">Delete</span>
                           </button>

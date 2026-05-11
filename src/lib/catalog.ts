@@ -1,5 +1,8 @@
+import { ObjectId } from "mongodb";
+
 export type CatalogItem = {
-  id: number;
+  _id?: string | ObjectId;
+  id?: number;
   name: string;
   brand: string;
   subCategory: string;
@@ -47,52 +50,78 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
   },
 ];
 
-export const CATALOG_STORAGE_KEY = "hammad-batteries-items";
-
-export function loadCatalogItems(): CatalogItem[] {
-  if (typeof window === "undefined") {
-    return DEFAULT_ITEMS;
-  }
-
-  const rawItems = window.localStorage.getItem(CATALOG_STORAGE_KEY);
-
-  if (!rawItems) {
-    return DEFAULT_ITEMS;
-  }
-
+// Database-backed catalog functions
+export async function loadCatalogItems(): Promise<CatalogItem[]> {
   try {
-    const parsedItems = JSON.parse(rawItems) as CatalogItem[];
-
-    if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
+    const response = await fetch("/api/items");
+    if (!response.ok) {
+      console.error("Failed to load items from database");
       return DEFAULT_ITEMS;
     }
-
-    return parsedItems.map(normalizeCatalogItem).filter(Boolean) as CatalogItem[];
-  } catch {
+    const result = await response.json();
+    return result.data || DEFAULT_ITEMS;
+  } catch (error) {
+    console.error("Error loading catalog items:", error);
     return DEFAULT_ITEMS;
   }
 }
 
-export function saveCatalogItems(items: CatalogItem[]) {
-  if (typeof window === "undefined") {
-    return;
+export async function saveCatalogItems(items: CatalogItem[]): Promise<boolean> {
+  try {
+    // Create new items not in database
+    for (const item of items) {
+      if (!item._id && !item.id) {
+        const response = await fetch("/api/items", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: item.name,
+            brand: item.brand,
+            subCategory: item.subCategory,
+            price: item.price,
+            stock: item.stock,
+            image: item.image || "",
+          }),
+        });
+        if (!response.ok) {
+          console.error("Failed to create item");
+          return false;
+        }
+      } else if (item._id) {
+        // Update existing item
+        const response = await fetch(`/api/items/${item._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: item.name,
+            brand: item.brand,
+            subCategory: item.subCategory,
+            price: item.price,
+            stock: item.stock,
+            image: item.image || "",
+          }),
+        });
+        if (!response.ok) {
+          console.error("Failed to update item");
+          return false;
+        }
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error("Error saving catalog items:", error);
+    return false;
   }
-
-  window.localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(items));
 }
 
-function normalizeCatalogItem(item: CatalogItem): CatalogItem | null {
-  if (!item || typeof item !== "object") {
-    return null;
+export async function deleteItemFromCatalog(id: string): Promise<boolean> {
+  try {
+    const response = await fetch(`/api/items/${id}`, {
+      method: "DELETE",
+    });
+    return response.ok;
+  } catch (error) {
+    console.error("Error deleting item:", error);
+    return false;
   }
-
-  return {
-    id: Number(item.id),
-    name: typeof item.name === "string" ? item.name : "",
-    brand: typeof item.brand === "string" ? item.brand : "",
-    subCategory: typeof item.subCategory === "string" ? item.subCategory : "",
-    price: typeof item.price === "string" ? item.price : "",
-    stock: typeof item.stock === "string" ? item.stock : "",
-    image: typeof item.image === "string" ? item.image : "",
-  };
 }
