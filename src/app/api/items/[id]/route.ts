@@ -1,9 +1,9 @@
 import { updateItem, deleteItem, getItemById } from "@/lib/db/crud";
 import { NextResponse } from "next/server";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  try {
-    const { id } = await Promise.resolve(params);
+export async function PUT(req: Request, context: any) {
+  const { id } = await context.params;  try {
+    // const { id } = await Promise.resolve(params);
     const body = await req.json();
 
     const item = await getItemById(id);
