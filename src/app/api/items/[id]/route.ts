@@ -64,14 +64,8 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
         { status: 404 }
       );
     }
+      return NextResponse.json({ success: true });
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Item deleted successfully",
-      },
-      { status: 200 }
-    );
   } catch (error) {
     console.error("Error deleting item:", error);
     return NextResponse.json(
