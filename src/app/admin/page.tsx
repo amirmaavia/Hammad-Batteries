@@ -405,8 +405,8 @@ export default function AdminPage() {
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center' }}>
-                        <strong className="price">{item.originalPrice}</strong>
-                        <span className="price-strike">{item.defaultPrice}</span>
+                        <strong className="price">{item.defaultPrice}</strong>
+                        <span className="price-strike">{item.originalPrice}</span>
                         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                           <Link href={`/items/${item.id}`} className="btn btn-outline btn-mobile-icon" title="View details">
                             <span className="btn-text">View</span>
