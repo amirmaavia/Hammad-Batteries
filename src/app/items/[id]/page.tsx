@@ -82,7 +82,7 @@ export default function ItemDetailPage() {
                       <Tag size={18} />
                       <div>
                         <span className="product-detail-stat-label">Price</span>
-                        <strong className="price">{item.price}</strong>
+                        <strong className="price">{item.defaultPrice}</strong>
                       </div>
                     </div>
 
@@ -105,7 +105,7 @@ export default function ItemDetailPage() {
 
                   <div className="product-detail-actions">
                     <a
-                      href={getWhatsAppLink(`Assalam o Alaikum, I'm interested in ${item.name} (${item.price}).`)}
+                      href={getWhatsAppLink(`Assalam o Alaikum, I'm interested in ${item.name} (${item.defaultPrice}).`)}
                       target="_blank"
                       rel="noreferrer"
                       className="btn btn-whatsapp"

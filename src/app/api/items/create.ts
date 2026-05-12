@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, brand, subCategory, price, stock, image } = body;
+    const { name, brand, subCategory, defaultPrice, originalPrice, stock, image } = body;
 
-    if (!name || !brand || !subCategory || !price || !stock) {
+    if (!name || !brand || !subCategory || !defaultPrice || originalPrice || !stock) {
       return NextResponse.json(
         {
           success: false,
@@ -20,7 +20,8 @@ export async function POST(req: Request) {
       name,
       brand,
       subCategory,
-      price,
+      defaultPrice,
+      originalPrice,
       stock,
       image: image || "",
     });
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         success: true,
-        data: { _id: id, name, brand, subCategory, price, stock, image },
+        data: { _id: id, name, brand, subCategory, defaultPrice, originalPrice, stock, image },
       },
       { status: 201 }
     );

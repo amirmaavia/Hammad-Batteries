@@ -7,7 +7,8 @@ interface Product {
   name: string;
   brand: string;
   subCategory: string;
-  price: string;
+  defaultPrice: string;
+  originalPrice: string;
   stock: string;
   image?: string;
 }
@@ -81,7 +82,8 @@ export default function ProductsPage() {
                 <h3 style={{ margin: '0 0 10px 0' }}>{product.name}</h3>
                 <p><strong>Brand:</strong> {product.brand}</p>
                 <p><strong>Category:</strong> {product.subCategory}</p>
-                <p><strong>Price:</strong> {product.price}</p>
+                <p><strong>Default Price:</strong> {product.defaultPrice}</p>
+                {/* <p><strong>Original Price:</strong> {product.originalPrice}</p> */}
                 <p><strong>Stock:</strong> <span style={{
                   color: product.stock === 'In Stock' ? 'green' : 'red'
                 }}>

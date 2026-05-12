@@ -45,7 +45,7 @@ export default function Footer() {
                     <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted)' }}>
                             <MapPin size={18} color="var(--primary)" />
-                            <span>123 Battery St, Tech World</span>
+                            <span>Ub20 Star City Mall, Saddar Mobile Market, Karachi.</span>
                         </li>
                         <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted)' }}>
                             <Phone size={18} color="var(--primary)" />
@@ -53,7 +53,7 @@ export default function Footer() {
                         </li>
                         <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted)' }}>
                             <Mail size={18} color="var(--primary)" />
-                            <span>support@hammadbatteries.com</span>
+                            <span>realhammad222@gmail.com</span>
                         </li>
                     </ul>
                 </div>

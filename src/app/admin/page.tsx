@@ -13,7 +13,8 @@ type ItemForm = {
   name: string;
   brand: string;
   subCategory: string;
-  price: string;
+  defaultPrice: string;
+  originalPrice: string;
   stock: string;
   image: string;
 };
@@ -22,7 +23,8 @@ const EMPTY_FORM: ItemForm = {
   name: '',
   brand: '',
   subCategory: '',
-  price: '',
+  defaultPrice: '',
+  originalPrice: '',
   stock: '',
   image: '',
 };
@@ -104,12 +106,13 @@ export default function AdminPage() {
       name: form.name.trim(),
       brand: form.brand.trim(),
       subCategory: form.subCategory.trim(),
-      price: form.price.trim(),
+      defaultPrice: form.defaultPrice.trim(),
+      originalPrice: form.originalPrice.trim(),
       stock: form.stock.trim(),
       image: form.image,
     };
 
-    if (!cleanItem.name || !cleanItem.brand || !cleanItem.subCategory || !cleanItem.price || !cleanItem.stock) {
+    if (!cleanItem.name || !cleanItem.brand || !cleanItem.subCategory || !cleanItem.defaultPrice || !cleanItem.originalPrice || !cleanItem.stock) {
       return;
     }
 
@@ -136,7 +139,8 @@ export default function AdminPage() {
       name: item.name,
       brand: item.brand,
       subCategory: item.subCategory,
-      price: item.price,
+      defaultPrice: item.defaultPrice,
+      originalPrice: item.originalPrice,
       stock: item.stock,
       image: item.image ?? '',
     });
@@ -308,16 +312,20 @@ export default function AdminPage() {
 
                   <div className="grid grid-cols-2">
                     <div className="form-group">
-                      <label className="form-label">Price</label>
-                      <input className="form-input" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} placeholder="Rs. 14,999" />
+                      <label className="form-label">Default Price</label>
+                      <input className="form-input" value={form.defaultPrice} onChange={(event) => setForm({ ...form, defaultPrice: event.target.value })} placeholder="Rs. 12,999" />
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Stock Status</label>
-                      <input className="form-input" value={form.stock} onChange={(event) => setForm({ ...form, stock: event.target.value })} placeholder="In Stock" />
+                      <label className="form-label">Original Price</label>
+                      <input className="form-input" value={form.originalPrice} onChange={(event) => setForm({ ...form, originalPrice: event.target.value })} placeholder="Rs. 14,999" />
                     </div>
                   </div>
 
+                  <div className="form-group">
+                    <label className="form-label">Stock Status</label>
+                    <input className="form-input" value={form.stock} onChange={(event) => setForm({ ...form, stock: event.target.value })} placeholder="In Stock" />
+                    </div>
                   <div className="form-group">
                     <label className="form-label">Product Picture</label>
                     <label className="image-upload-box">
@@ -397,7 +405,8 @@ export default function AdminPage() {
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center' }}>
-                        <strong className="price">{item.price}</strong>
+                        <strong className="price">{item.originalPrice}</strong>
+                        <span className="price-strike">{item.defaultPrice}</span>
                         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                           <Link href={`/items/${item.id}`} className="btn btn-outline btn-mobile-icon" title="View details">
                             <span className="btn-text">View</span>

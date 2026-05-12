@@ -149,7 +149,8 @@ export default function Home() {
                   </div>
                   <h3 className="card-title" style={{ marginTop: '1rem', fontSize: '1.4rem' }}>{model.name}</h3>
                   <div className="card-footer">
-                    <span className="price">{model.price}</span>
+                    <span className="price">{model.defaultPrice}<small className='price-strike'>{"  " + model.originalPrice}</small></span>
+                    {/* <span className='price-strike'>{model.originalPrice}</span> */}
                     <a
                       href={getWhatsAppLink(`Assalam o Alaikum, I'm interested in ${model.name}`)}
                       target="_blank"

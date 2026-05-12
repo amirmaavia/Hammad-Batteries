@@ -6,7 +6,8 @@ export type CatalogItem = {
   name: string;
   brand: string;
   subCategory: string;
-  price: string;
+  defaultPrice: string;
+  originalPrice: string;
   stock: string;
   image?: string;
 };
@@ -17,7 +18,8 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     name: "Samsung Galaxy S24 Ultra Battery",
     brand: "Samsung",
     subCategory: "S Series",
-    price: "Rs. 14,999",
+    originalPrice: "",
+    defaultPrice: "Rs. 14,999",
     stock: "In Stock",
     image: "",
   },
@@ -26,28 +28,11 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     name: "Samsung Galaxy Note 20 Battery",
     brand: "Samsung",
     subCategory: "Note Series",
-    price: "Rs. 10,500",
+    originalPrice: "Rs. 10,500",
+    defaultPrice: "Rs. 10,500",
     stock: "In Stock",
     image: "",
-  },
-  {
-    id: 3,
-    name: "Samsung Galaxy A54 Battery",
-    brand: "Samsung",
-    subCategory: "A Series",
-    price: "Rs. 8,999",
-    stock: "In Stock",
-    image: "",
-  },
-  {
-    id: 4,
-    name: "iPhone 15 Pro Max Battery",
-    brand: "Apple",
-    subCategory: "Pro Max Series",
-    price: "Rs. 18,500",
-    stock: "Out of Stock",
-    image: "",
-  },
+  }
 ];
 
 // Database-backed catalog functions
@@ -78,7 +63,8 @@ export async function saveCatalogItems(items: CatalogItem[]): Promise<boolean> {
             name: item.name,
             brand: item.brand,
             subCategory: item.subCategory,
-            price: item.price,
+            defaultPrice: item.defaultPrice,
+            originalPrice: item.originalPrice,
             stock: item.stock,
             image: item.image || "",
           }),
@@ -96,7 +82,8 @@ export async function saveCatalogItems(items: CatalogItem[]): Promise<boolean> {
             name: item.name,
             brand: item.brand,
             subCategory: item.subCategory,
-            price: item.price,
+            defaultPrice: item.defaultPrice,
+            originalPrice: item.originalPrice,
             stock: item.stock,
             image: item.image || "",
           }),
