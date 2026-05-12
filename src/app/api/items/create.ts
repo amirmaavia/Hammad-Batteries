@@ -20,8 +20,8 @@ export async function POST(req: Request) {
       name,
       brand,
       subCategory,
-      defaultPrice,
       originalPrice,
+      defaultPrice,
       stock,
       image: image || "",
     });

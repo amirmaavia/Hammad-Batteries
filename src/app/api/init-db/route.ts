@@ -24,50 +24,11 @@ export async function GET() {
         name: "Samsung Galaxy S24 Ultra Battery",
         brand: "Samsung",
         subCategory: "S Series",
+        defaultPrice: "Rs. 14,999",
+        originalPrice: "Rs. 16,999",
         price: "Rs. 14,999",
         stock: "In Stock",
-        image: "",
-      },
-      {
-        name: "Samsung Galaxy Note 20 Battery",
-        brand: "Samsung",
-        subCategory: "Note Series",
-        price: "Rs. 10,500",
-        stock: "In Stock",
-        image: "",
-      },
-      {
-        name: "Samsung Galaxy A54 Battery",
-        brand: "Samsung",
-        subCategory: "A Series",
-        price: "Rs. 8,999",
-        stock: "In Stock",
-        image: "",
-      },
-      {
-        name: "iPhone 15 Pro Max Battery",
-        brand: "Apple",
-        subCategory: "Pro Max Series",
-        price: "Rs. 18,500",
-        stock: "Out of Stock",
-        image: "",
-      },
-      {
-        name: "iPhone 14 Pro Battery",
-        brand: "Apple",
-        subCategory: "Pro Series",
-        price: "Rs. 16,999",
-        stock: "In Stock",
-        image: "",
-      },
-      {
-        name: "OnePlus 12 Battery",
-        brand: "OnePlus",
-        subCategory: "OnePlus 12 Series",
-        price: "Rs. 7,999",
-        stock: "In Stock",
-        image: "",
-      },
+        image: "",}
     ];
 
     const insertedIds = await insertManyItems(defaultItems);

@@ -5,7 +5,8 @@ export interface CatalogItemSchema {
   name: string;
   brand: string;
   subCategory: string;
-  price: string;
+  originalPrice: string;
+  defaultPrice: string;
   stock: string;
   image?: string;
   createdAt?: Date;
@@ -20,7 +21,8 @@ export const catalogItemSchema = {
     name: { bsonType: "string", description: "Product name" },
     brand: { bsonType: "string", description: "Brand name" },
     subCategory: { bsonType: "string", description: "Sub category" },
-    price: { bsonType: "string", description: "Price in Rs." },
+    originalPrice: { bsonType: "string", description: "Original price in Rs." },
+    defaultPrice: { bsonType: "string", description: "Default price in Rs." },
     stock: { bsonType: "string", description: "Stock status" },
     image: { bsonType: "string", description: "Image URL" },
     createdAt: { bsonType: "date", description: "Creation timestamp" },

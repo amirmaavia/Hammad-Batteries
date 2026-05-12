@@ -7,7 +7,8 @@ interface Product {
   name: string;
   brand: string;
   subCategory: string;
-  price: string;
+  defaultPrice: string;
+  originalPrice: string;
   stock: string;
 }
 
@@ -100,7 +101,8 @@ export default function SetupPage() {
                   <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Product Name</th>
                   <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Brand</th>
                   <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Category</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Price</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Default Price</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Original Price</th>
                   <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Stock</th>
                 </tr>
               </thead>
@@ -110,7 +112,7 @@ export default function SetupPage() {
                     <td style={{ padding: '12px' }}>{product.name}</td>
                     <td style={{ padding: '12px' }}>{product.brand}</td>
                     <td style={{ padding: '12px' }}>{product.subCategory}</td>
-                    <td style={{ padding: '12px', fontWeight: 'bold' }}>{product.price}</td>
+                    <td style={{ padding: '12px', fontWeight: 'bold' }}>{product.defaultPrice}</td>
                     <td style={{
                       padding: '12px',
                       color: product.stock === 'In Stock' ? 'green' : 'red',
