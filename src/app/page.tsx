@@ -115,7 +115,7 @@ export default function Home() {
             <div className="grid grid-cols-3">
               {models.map((model) => (
                 <div
-                  key={model._id}
+                  // key={model._id}
                   className="card product-card-link"
                   style={{ animation: 'fade-in 0.5s ease-out' }}
                   onClick={() => router.push(`/items/${model._id}`)}
