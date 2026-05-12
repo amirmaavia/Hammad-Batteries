@@ -25,7 +25,7 @@ const EMPTY_FORM: ItemForm = {
   subCategory: '',
   defaultPrice: '',
   originalPrice: '',
-  stock: '',
+  stock: 'In Stock',
   image: '',
 };
 
@@ -324,8 +324,8 @@ export default function AdminPage() {
 
                   <div className="form-group">
                     <label className="form-label">Stock Status</label>
-                    <input className="form-input" value={form.stock} onChange={(event) => setForm({ ...form, stock: event.target.value })} placeholder="In Stock" />
-                    </div>
+                    <input type="checkbox" className="" checked={form.stock === "In Stock"} onChange={(event) => setForm({ ...form, stock: event.target.checked ? "In Stock" : "Out of Stock" })} />
+                  </div>
                   <div className="form-group">
                     <label className="form-label">Product Picture</label>
                     <label className="image-upload-box">
