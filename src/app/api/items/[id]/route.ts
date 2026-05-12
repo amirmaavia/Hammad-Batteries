@@ -1,8 +1,9 @@
 import { updateItem, deleteItem, getItemById } from "@/lib/db/crud";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function PUT(req: Request, context: any) {
-  const { id } = await context.params;  try {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  try {
     // const { id } = await Promise.resolve(params);
     const body = await req.json();
 
@@ -49,9 +50,9 @@ export async function PUT(req: Request, context: any) {
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await Promise.resolve(params);
+    const { id } = await context.params;
 
     const deleted = await deleteItem(id);
 
