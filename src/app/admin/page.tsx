@@ -115,17 +115,17 @@ export default function AdminPage() {
     if (!cleanItem.name || !cleanItem.brand || !cleanItem.subCategory || !cleanItem.defaultPrice || !cleanItem.originalPrice || !cleanItem.stock) {
       return;
     }
-
+console.log(editingId, cleanItem);
     if (editingId === null) {
-      const updatedItems = [{ ...cleanItem }, ...items];
+      const updatedItems = { ...cleanItem };
       await saveCatalogItems(updatedItems);
     } else {
-      const updatedItems = items.map((item) => {
-        const itemId = item._id ? item._id.toString() : item.id?.toString();
-        const editId = editingId.toString();
-        return itemId === editId ? { ...item, ...cleanItem } : item;
-      });
-      await saveCatalogItems(updatedItems);
+      const updatedItems = cleanItem;
+      // const updatedItems = items.map((item) => {
+      //   const itemId = item._id ? item._id.toString() : item.id?.toString();
+      //   const editId = editingId.toString();
+      //   return itemId === editId ? { ...item, ...cleanItem } : item;;
+      await saveCatalogItems({ ...cleanItem, _id: editingId } as CatalogItem);
     }
 
     const reloadedItems = await loadCatalogItems();
@@ -292,7 +292,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={(e) => handleSubmit(e)}>
                   <div className="form-group">
                     <label className="form-label">Item Name</label>
                     <input className="form-input" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Samsung Galaxy S24 Ultra Battery" />
@@ -382,7 +382,12 @@ export default function AdminPage() {
                 </div>
 
                 <div style={{ display: 'grid', gap: '1rem' }}>
-                  {sortedItems.map((item) => (
+                  {loading ? (
+                    <p>Loading items...</p>
+                  ) : sortedItems.length === 0 ? (
+                    <p>No items found. Add some using the form on the left.</p>
+                  ) : 
+                  sortedItems.map((item) => (
                     <div key={item.id} style={{ border: '1px solid var(--card-border)', borderRadius: '12px', padding: '1rem', background: 'var(--surface-soft)' }}>
                       {item.image ? (
                         <Image src={item.image} alt={item.name} width={640} height={360} unoptimized className="admin-item-thumb" />
@@ -408,7 +413,7 @@ export default function AdminPage() {
                         <strong className="price">{item.defaultPrice}</strong>
                         <span className="price-strike">{item.originalPrice}</span>
                         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                          <Link href={`/items/${item.id}`} className="btn btn-outline btn-mobile-icon" title="View details">
+                          <Link href={`/items/${item._id}`} className="btn btn-outline btn-mobile-icon" title="View details">
                             <span className="btn-text">View</span>
                           </Link>
                           <button type="button" className="btn btn-outline btn-mobile-icon" onClick={() => handleEdit(item)} aria-label={`Edit ${item.name}`} title="Edit">

@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
 import { ArrowLeft, BadgeInfo, ImageOff, MessageCircle, PackageCheck, Smartphone, Tag } from 'lucide-react';
-import { CatalogItem, loadCatalogItems } from '../../../lib/catalog';
+import { CatalogItem, loadCatalogItems, loadCatalogItemsById } from '../../../lib/catalog';
 import { getWhatsAppLink } from '../../../lib/site';
 import { useEffect, useState } from 'react';
 
@@ -32,11 +32,7 @@ export default function ItemDetailPage() {
   useEffect(() => {
     const loadItem = async () => {
       setLoading(true);
-      const items = await loadCatalogItems();
-      const foundItem = items.find((entry) => {
-        const entryId = entry._id?.toString() || entry.id?.toString();
-        return entryId === itemId;
-      });
+      const foundItem: CatalogItem | null = await loadCatalogItemsById(itemId);
       setItem(foundItem);
       setLoading(false);
     };
@@ -55,8 +51,15 @@ export default function ItemDetailPage() {
               <ArrowLeft size={18} />
               Back to Items
             </Link>
-
-            {item ? (
+{loading ? (
+              <div className="card product-empty-state">
+                <p style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>Loading item details...</p>
+                <p className="subtitle" style={{ marginBottom: '1.5rem' }}>
+                  Please wait while we load the product information.
+                </p>
+              </div>
+            ) :
+            item ? (
               <div className="product-detail-layout">
                 <div className="card product-detail-media-card">
                   <ItemImage item={item} />

@@ -78,3 +78,37 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
     );
   }
 }
+
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await context.params;
+    const item = await getItemById(id);
+
+    if (!item) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Item not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: item,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error fetching item by ID:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to retrieve item",
+      },
+      { status: 500 }
+    );
+  }
+}

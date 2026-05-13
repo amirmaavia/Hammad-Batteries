@@ -79,7 +79,12 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-4" style={{ marginTop: '3rem' }}>
-              {Object.entries(groupedBrands).map(([brand, subCategories], index) => (
+              {loading ? (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '20px' }}>
+                  <h1>Loading Categories...</h1>
+                </div>
+              ) : 
+              Object.entries(groupedBrands).map(([brand, subCategories], index) => (
                 <div key={brand} className="card" style={index === 0 ? { borderColor: 'rgba(59, 130, 246, 0.4)' } : undefined}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                     <Smartphone size={32} color={index % 4 === 0 ? "#60a5fa" : index % 4 === 1 ? "#e4e4e7" : index % 4 === 2 ? "#f43f5e" : "#a855f7"} />
@@ -113,7 +118,12 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-3">
-              {models.map((model) => (
+              {loading ? (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '20px' }}>
+                  <h1>Loading Products...</h1> {/* Show loading state */}
+                </div>
+              ) :
+              models.map((model) => (
                 <div
                   // key={model._id}
                   className="card product-card-link"

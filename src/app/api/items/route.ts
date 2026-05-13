@@ -1,3 +1,4 @@
+import { loadCatalogItemsById } from "@/lib/catalog";
 import { getAllItems, createItem } from "@/lib/db/crud";
 import { NextResponse } from "next/server";
 
@@ -18,6 +19,36 @@ export async function GET() {
       {
         success: false,
         error: error instanceof Error ? error.message : "Failed to fetch items",
+      },
+      { status: 500 }
+    );
+  }
+}
+export async function GETBYID(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const item = await loadCatalogItemsById(params.id);
+    if (!item) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Item not found",
+        },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(
+      {
+        success: true,
+        data: item,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error fetching item:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to fetch item",
       },
       { status: 500 }
     );

@@ -51,48 +51,63 @@ export async function loadCatalogItems(): Promise<CatalogItem[]> {
   }
 }
 
-export async function saveCatalogItems(items: CatalogItem[]): Promise<boolean> {
+export async function loadCatalogItemsById(id: string): Promise<CatalogItem | null> {
+  try {
+    const response = await fetch(`/api/items/${id}`);
+    if (!response.ok) {
+      console.error("Failed to load item from database");
+      return null;
+    }
+    const result = await response.json();
+    return result.data || null;
+  } catch (error) {
+    console.error("Error loading catalog item:", error);
+    return null;
+  }
+}
+
+export async function saveCatalogItems(items: CatalogItem): Promise<boolean> {
   try {
     // Create new items not in database
-    for (const item of items) {
-      if (!item._id && !item.id) {
+    // for (const item of items) {
+      if (!items._id && !items.id) {
         const response = await fetch("/api/items", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: item.name,
-            brand: item.brand,
-            subCategory: item.subCategory,
-            defaultPrice: item.defaultPrice,
-            originalPrice: item.originalPrice,
-            stock: item.stock,
-            image: item.image || "",
+            name: items.name,
+            brand: items.brand,
+            subCategory: items.subCategory,
+            defaultPrice: items.defaultPrice,
+            originalPrice: items.originalPrice,
+            stock: items.stock,
+            image: items.image || "",
           }),
         });
         if (!response.ok) {
-          console.error("Failed to create item");
+          console.error("Failed to create items");
           return false;
         }
-      } else if (item._id) {
-        // Update existing item
-        const response = await fetch(`/api/items/${item._id}`, {
+      } else if (items._id) {
+        // Update existing items
+        const response = await fetch(`/api/items/${items._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: item.name,
-            brand: item.brand,
-            subCategory: item.subCategory,
-            defaultPrice: item.defaultPrice,
-            originalPrice: item.originalPrice,
-            stock: item.stock,
-            image: item.image || "",
+            name: items.name,
+            brand: items.brand,
+            subCategory: items.subCategory,
+            defaultPrice: items.defaultPrice,
+            originalPrice: items.originalPrice,
+            stock: items.stock,
+            image: items.image || "",
           }),
         });
         if (!response.ok) {
           console.error("Failed to update item");
           return false;
         }
-      }
+      // }/
     }
     return true;
   } catch (error) {

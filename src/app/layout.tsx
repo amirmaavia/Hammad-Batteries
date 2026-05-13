@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import DatabaseConnectionTest from "../components/DatabaseConnectionTest";
-
 export const metadata: Metadata = {
   title: "Hammad Batteries | Professional Mobile Battery Shop",
   description: "Premium mobile batteries for Samsung, Apple, and more. Auto-updated latest models available at Hammad Batteries.",
@@ -31,7 +29,6 @@ export default function RootLayout({
       </head>
       <body>
         {children}
-        <DatabaseConnectionTest />
       </body>
     </html>
   );
