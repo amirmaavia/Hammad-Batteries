@@ -170,7 +170,7 @@ console.log(editingId, cleanItem);
   };
 
   const handleReset = async () => {
-    await saveCatalogItems(DEFAULT_ITEMS);
+    // await saveCatalogItems(DEFAULT_ITEMS);
     const reloadedItems = await loadCatalogItems();
     setItems(reloadedItems);
     setEditingId(null);
