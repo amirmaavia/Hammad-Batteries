@@ -33,10 +33,9 @@ export default function ItemDetailPage() {
     const loadItem = async () => {
       setLoading(true);
       const foundItem: CatalogItem | null = await loadCatalogItemsById(itemId);
-      setItem(foundItem);
+      setItem(foundItem  ?? undefined);
       setLoading(false);
     };
-
     loadItem();
   }, [itemId]);
 

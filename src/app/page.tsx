@@ -21,7 +21,6 @@ export default function Home() {
       setModels(items);
       setLoading(false);
     };
-
     loadItems();
   }, []);
 
