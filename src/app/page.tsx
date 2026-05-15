@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
@@ -13,29 +13,59 @@ export default function Home() {
   const router = useRouter();
   const [models, setModels] = useState<CatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterBrand, setFilterBrand] = useState<CatalogItem[]>([]);
 
   useEffect(() => {
     const loadItems = async () => {
       setLoading(true);
       const items = await loadCatalogItems();
-      setModels(items);
+      setModels(items.reverse()); // Show latest items first
+      setFilterBrand(items);
       setLoading(false);
     };
     loadItems();
   }, []);
+const searchItems = filterBrand.filter((item) =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.subCategory.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const brandsInitialized = useRef(false);
+const [groupedBrands, setGroupedBrands] = useState<Record<string, string[]>>({});
 
-  const groupedBrands = models.reduce<Record<string, string[]>>((accumulator, model) => {
-    if (!accumulator[model.brand]) {
-      accumulator[model.brand] = [];
-    }
+useEffect(() => {
+  if (models.length > 0 && !brandsInitialized.current) {
+    const grouped = models.reduce<Record<string, string[]>>((accumulator, model) => {
+      if (!accumulator[model.brand]) {
+        accumulator[model.brand] = [];
+      }
+      if (!accumulator[model.brand].includes(model.subCategory)) {
+        accumulator[model.brand].push(model.subCategory);
+      }
+      return accumulator;
+    }, {});
 
-    if (!accumulator[model.brand].includes(model.subCategory)) {
-      accumulator[model.brand].push(model.subCategory);
-    }
+    setGroupedBrands(grouped);
+    brandsInitialized.current = true; // ← sirf ek baar chalega
+  }
+}, [models]);
+  // const groupedBrands = models.reduce<Record<string, string[]>>((accumulator, model) => {
+  //   if (!accumulator[model.brand]) {
+  //     accumulator[model.brand] = [];
+  //   }
 
-    return accumulator;
-  }, {});
+  //   if (!accumulator[model.brand].includes(model.subCategory)) {
+  //     accumulator[model.brand].push(model.subCategory);
+  //   }
 
+  //   return accumulator;
+  // }, {});
+const filterByBrand = (brand: string) => {
+    const filteredItems:CatalogItem[] = models.filter((item) => item.brand === brand);
+    setFilterBrand(filteredItems.length > 0 ? filteredItems : models); // Set filterBrand to the brand name if items exist, otherwise reset
+    // setModels(filteredItems);
+  }
   return (
     <>
       <Navbar />
@@ -77,6 +107,9 @@ export default function Home() {
               <p className="subtitle">Extensive support for all top brands including our specialized Samsung catalog.</p>
             </div>
 
+            <button onClick={() => filterByBrand("all")} className="btn btn-primary" style={{ marginTop: '2rem', marginBottom: '2rem' }}>
+              Show All Items
+            </button>
             <div className="grid grid-cols-4" style={{ marginTop: '3rem' }}>
               {loading ? (
                 <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '20px' }}>
@@ -84,7 +117,7 @@ export default function Home() {
                 </div>
               ) : 
               Object.entries(groupedBrands).map(([brand, subCategories], index) => (
-                <div key={brand} className="card" style={index === 0 ? { borderColor: 'rgba(59, 130, 246, 0.4)' } : undefined}>
+                <div onClick={() => {filterByBrand(brand)}} key={brand} className="card" style={index === 0 ? { borderColor: 'rgba(59, 130, 246, 0.4)' } : undefined}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                     <Smartphone size={32} color={index % 4 === 0 ? "#60a5fa" : index % 4 === 1 ? "#e4e4e7" : index % 4 === 2 ? "#f43f5e" : "#a855f7"} />
                     <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{brand}</h3>
@@ -110,10 +143,7 @@ export default function Home() {
                 <h2 className="title" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Latest Battery Items</h2>
                 <p className="subtitle" style={{ margin: 0 }}>These items can now be managed from the admin panel.</p>
               </div>
-              {/* <a href="/admin" className="btn btn-outline" style={{ borderColor: '#60a5fa', color: '#60a5fa' }}>
-                <Zap size={18} />
-                Open Admin Panel
-              </a> */}
+              <input className="btn btn-outline" style={{ borderColor: '#60a5fa', color: '#60a5fa' }} placeholder='Search Items....' onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
 
             <div className="grid grid-cols-3">
@@ -122,7 +152,7 @@ export default function Home() {
                   <h1>Loading Products...</h1> {/* Show loading state */}
                 </div>
               ) :
-              models.map((model) => (
+              searchItems.map((model) => (
                 <div
                   // key={model._id}
                   className="card product-card-link"
@@ -164,8 +194,8 @@ export default function Home() {
                       href={getWhatsAppLink(`Assalam o Alaikum, I'm interested in ${model.name}`)}
                       target="_blank"
                       rel="noreferrer"
-                      className="btn btn-mobile-icon"
-                      style={{ padding: '0.5rem 1rem', background: 'var(--success-soft)', color: '#10b981' }}
+                      className="btn btn-whatsapp btn-mobile-icon"
+                      style={{ padding: '0.5rem 1rem' }}
                       aria-label={`Ask about ${model.name} on WhatsApp`}
                       title="Ask on WhatsApp"
                       onClick={(event) => event.stopPropagation()}

@@ -20,7 +20,6 @@ export default function RootLayout({
       document.documentElement.setAttribute('data-theme', theme);
     })();
   `;
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
