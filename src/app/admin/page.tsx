@@ -13,20 +13,24 @@ type ItemForm = {
   name: string;
   brand: string;
   subCategory: string;
+  description: string;
   defaultPrice: string;
   originalPrice: string;
   stock: string;
   image: string;
+  imageFit: NonNullable<CatalogItem["imageFit"]>;
 };
 
 const EMPTY_FORM: ItemForm = {
   name: '',
   brand: '',
   subCategory: '',
+  description: '',
   defaultPrice: '',
   originalPrice: '',
   stock: 'In Stock',
   image: '',
+  imageFit: 'fit',
 };
 
 const ADMIN_AUTH_KEY = 'hammad-batteries-admin-auth';
@@ -62,9 +66,9 @@ export default function AdminPage() {
 
   const sortedItems = useMemo(
     () => [...items].sort((firstItem, secondItem) => {
-      const firstId = (firstItem._id?.toString() || firstItem.id || 0) as any;
-      const secondId = (secondItem._id?.toString() || secondItem.id || 0) as any;
-      return secondId - firstId;
+      const firstId = firstItem._id?.toString() || firstItem.id?.toString() || '';
+      const secondId = secondItem._id?.toString() || secondItem.id?.toString() || '';
+      return secondId.localeCompare(firstId);
     }),
     [items]
   );
@@ -106,21 +110,20 @@ export default function AdminPage() {
       name: form.name.trim(),
       brand: form.brand.trim(),
       subCategory: form.subCategory.trim(),
+      description: form.description.trim(),
       defaultPrice: form.defaultPrice.trim(),
       originalPrice: form.originalPrice.trim(),
       stock: form.stock.trim(),
       image: form.image,
+      imageFit: form.imageFit,
     };
 
     if (!cleanItem.name || !cleanItem.brand || !cleanItem.subCategory || !cleanItem.defaultPrice || !cleanItem.originalPrice || !cleanItem.stock) {
       return;
     }
-console.log(editingId, cleanItem);
     if (editingId === null) {
-      const updatedItems = { ...cleanItem };
-      await saveCatalogItems(updatedItems);
+      await saveCatalogItems({ ...cleanItem });
     } else {
-      const updatedItems = cleanItem;
       // const updatedItems = items.map((item) => {
       //   const itemId = item._id ? item._id.toString() : item.id?.toString();
       //   const editId = editingId.toString();
@@ -139,10 +142,12 @@ console.log(editingId, cleanItem);
       name: item.name,
       brand: item.brand,
       subCategory: item.subCategory,
+      description: item.description ?? '',
       defaultPrice: item.defaultPrice,
       originalPrice: item.originalPrice,
       stock: item.stock,
       image: item.image ?? '',
+      imageFit: item.imageFit ?? 'fit',
     });
     const id = item._id ? item._id.toString() : item.id;
     if (id) {
@@ -299,6 +304,17 @@ console.log(editingId, cleanItem);
                     <input className="form-input" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Samsung Galaxy S24 Ultra Battery" />
                   </div>
 
+                  <div className="form-group">
+                    <label className="form-label">Description</label>
+                    <textarea
+                      className="form-input"
+                      value={form.description}
+                      onChange={(event) => setForm({ ...form, description: event.target.value })}
+                      placeholder="Write product details, quality notes, compatibility, warranty, or delivery information."
+                      rows={4}
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2">
                     <div className="form-group">
                       <label className="form-label">Brand</label>
@@ -327,6 +343,21 @@ console.log(editingId, cleanItem);
                     <label className="form-label">Stock Status</label>
                     <input type="checkbox" className="" checked={form.stock === "In Stock"} onChange={(event) => setForm({ ...form, stock: event.target.checked ? "In Stock" : "Out of Stock" })} />
                   </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Card Picture Sizing</label>
+                    <select
+                      className="form-input"
+                      value={form.imageFit}
+                      onChange={(event) => setForm({ ...form, imageFit: event.target.value as ItemForm["imageFit"] })}
+                    >
+                      <option value="fit">Fit full picture</option>
+                      <option value="fill">Fill card</option>
+                      <option value="zoom">Zoomed fill</option>
+                    </select>
+                    <p className="upload-help-text">Controls how this product picture appears in home and store cards.</p>
+                  </div>
+
                   <div className="form-group">
                     <label className="form-label">Product Picture</label>
                     <label className="image-upload-box">
@@ -338,7 +369,7 @@ console.log(editingId, cleanItem);
 
                     {form.image ? (
                       <div className="admin-image-preview-wrap">
-                        <Image src={form.image} alt="Preview" width={320} height={240} unoptimized className="admin-image-preview" />
+                        <Image src={form.image} alt="Preview" width={320} height={240} unoptimized className={`admin-image-preview product-card-image-${form.imageFit}`} />
                         <button
                           type="button"
                           className="btn btn-outline"
@@ -391,7 +422,7 @@ console.log(editingId, cleanItem);
                   sortedItems.map((item) => (
                     <div key={item.id} style={{ border: '1px solid var(--card-border)', borderRadius: '12px', padding: '1rem', background: 'var(--surface-soft)' }}>
                       {item.image ? (
-                        <Image src={item.image} alt={item.name} width={640} height={360} unoptimized className="admin-item-thumb" />
+                        <Image src={item.image} alt={item.name} width={640} height={360} unoptimized className={`admin-item-thumb product-card-image-${item.imageFit ?? 'fit'}`} />
                       ) : (
                         <div className="admin-item-thumb admin-item-thumb-fallback">
                           <ImagePlus size={22} />

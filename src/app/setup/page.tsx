@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { API_ROUTES } from '../../lib/api-routes';
 
 interface Product {
   _id: string;
@@ -37,7 +39,7 @@ export default function SetupPage() {
 
         // Step 2: Fetch all items
         setStatus('Step 3: Fetching all items from database...');
-        const itemsResponse = await fetch('/api/items');
+        const itemsResponse = await fetch(API_ROUTES.items);
         const itemsResult = await itemsResponse.json();
 
         if (!itemsResult.success) {
@@ -136,19 +138,19 @@ export default function SetupPage() {
             <h3>🔗 Navigation Links:</h3>
             <ul style={{ listStyle: 'none', padding: 0 }}>
               <li style={{ marginBottom: '10px' }}>
-                <a href="/products" style={{ color: '#007bff', textDecoration: 'none', fontSize: '16px' }}>
+                <Link href="/products" style={{ color: '#007bff', textDecoration: 'none', fontSize: '16px' }}>
                   → View All Products
-                </a>
+                </Link>
               </li>
               <li style={{ marginBottom: '10px' }}>
-                <a href="/admin" style={{ color: '#007bff', textDecoration: 'none', fontSize: '16px' }}>
+                <Link href="/admin" style={{ color: '#007bff', textDecoration: 'none', fontSize: '16px' }}>
                   → Go to Admin Panel
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/" style={{ color: '#007bff', textDecoration: 'none', fontSize: '16px' }}>
+                <Link href="/" style={{ color: '#007bff', textDecoration: 'none', fontSize: '16px' }}>
                   → Go to Homepage
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

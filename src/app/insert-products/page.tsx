@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
+import { API_ROUTES } from '../../lib/api-routes';
 
 export default function InsertProductsPage() {
   const [loading, setLoading] = useState(false);
@@ -26,7 +28,7 @@ export default function InsertProductsPage() {
 
     try {
       for (const product of sampleProducts) {
-        const response = await fetch('/api/items', {
+        const response = await fetch(API_ROUTES.items, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(product),
@@ -104,8 +106,8 @@ export default function InsertProductsPage() {
         <ol>
           <li>Make sure MongoDB is running on localhost:27017</li>
           <li>Click the button above to insert sample products</li>
-          <li>Visit <a href="/products">/products</a> to view all products</li>
-          <li>Visit <a href="/">/</a> to see products on homepage</li>
+          <li>Visit <Link href="/products">/products</Link> to view all products</li>
+          <li>Visit <Link href="/">/</Link> to see products on homepage</li>
         </ol>
       </div>
     </div>

@@ -6,13 +6,13 @@ import { useParams } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
 import { ArrowLeft, BadgeInfo, ImageOff, MessageCircle, PackageCheck, Smartphone, Tag } from 'lucide-react';
-import { CatalogItem, loadCatalogItems, loadCatalogItemsById } from '../../../lib/catalog';
+import { CatalogItem, loadCatalogItemsById } from '../../../lib/catalog';
 import { getWhatsAppLink } from '../../../lib/site';
 import { useEffect, useState } from 'react';
 
 function ItemImage({ item }: { item: CatalogItem }) {
   if (item.image) {
-    return <Image src={item.image} alt={item.name} width={800} height={800} unoptimized className="product-detail-image" />;
+    return <Image src={item.image} alt={item.name} width={800} height={800} unoptimized className={`product-detail-image product-card-image-${item.imageFit ?? 'fit'}`} />;
   }
 
   return (
@@ -76,7 +76,7 @@ export default function ItemDetailPage() {
 
                   <h1 className="title" style={{ fontSize: '2.8rem', marginBottom: '1rem' }}>{item.name}</h1>
                   <p className="subtitle" style={{ margin: 0, maxWidth: 'unset' }}>
-                    Full product detail page for the selected battery item. Admin-added products also open here with the same layout.
+                    {item.description || 'Full product detail page for the selected battery item. Admin-added products also open here with the same layout.'}
                   </p>
 
                   <div className="product-detail-stats">
