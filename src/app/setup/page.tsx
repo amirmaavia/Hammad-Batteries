@@ -2,7 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 import { API_ROUTES } from '../../lib/api-routes';
+import { useAppDispatch } from '@/store/hooks';
+import { setItems } from '@/store/itemsSlice';
 
 interface Product {
   _id: string;
@@ -15,6 +19,7 @@ interface Product {
 }
 
 export default function SetupPage() {
+  const dispatch = useAppDispatch();
   const [status, setStatus] = useState('Initializing database...');
   const [products, setProducts] = useState<Product[]>([]);
   const [error, setError] = useState('');
@@ -26,7 +31,6 @@ export default function SetupPage() {
         setLoading(true);
         setError('');
 
-        // Step 1: Initialize database with default items
         setStatus('Step 1: Initializing database with default items...');
         const initResponse = await fetch('/api/init-db');
         const initResult = await initResponse.json();
@@ -37,7 +41,6 @@ export default function SetupPage() {
 
         setStatus(`Step 2: Database initialized! Found ${initResult.insertedCount || initResult.count} items`);
 
-        // Step 2: Fetch all items
         setStatus('Step 3: Fetching all items from database...');
         const itemsResponse = await fetch(API_ROUTES.items);
         const itemsResult = await itemsResponse.json();
@@ -47,126 +50,96 @@ export default function SetupPage() {
         }
 
         setProducts(itemsResult.data);
-        setStatus(`✅ Success! Database ready with ${itemsResult.data.length} products`);
+        dispatch(setItems(itemsResult.data));
+        setStatus(`Success! Database ready with ${itemsResult.data.length} products`);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
-        setStatus('❌ Setup failed');
+        setStatus('Setup failed');
       } finally {
         setLoading(false);
       }
     };
 
     initializeDatabase();
-  }, []);
+  }, [dispatch]);
 
   return (
-    <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto' }}>
-      <h1>🔧 Database Setup</h1>
+    <>
+      <Navbar />
+      <main className="page-shell">
+        <h1 className="title" style={{ fontSize: '2.5rem' }}>Database Setup</h1>
 
-      {/* Status Section */}
-      <div style={{
-        padding: '20px',
-        backgroundColor: loading ? '#fff3cd' : error ? '#f8d7da' : '#d4edda',
-        color: loading ? '#856404' : error ? '#721c24' : '#155724',
-        borderRadius: '8px',
-        marginBottom: '20px',
-        fontSize: '16px'
-      }}>
-        {status}
-      </div>
-
-      {error && (
-        <div style={{
-          padding: '20px',
-          backgroundColor: '#f8d7da',
-          color: '#721c24',
-          borderRadius: '8px',
-          marginBottom: '20px',
-          border: '1px solid #f5c6cb'
-        }}>
-          <strong>Error:</strong> {error}
+        <div className={`status-banner ${loading ? 'status-warning' : error ? 'status-error' : 'status-success'}`}>
+          {status}
         </div>
-      )}
 
-      {/* Products Table */}
-      {products.length > 0 && (
-        <div>
-          <h2>📦 Products in Database ({products.length})</h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              marginBottom: '20px'
-            }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f0f0f0' }}>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Product Name</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Brand</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Category</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Default Price</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Original Price</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Stock</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((product) => (
-                  <tr key={product._id} style={{ borderBottom: '1px solid #ddd' }}>
-                    <td style={{ padding: '12px' }}>{product.name}</td>
-                    <td style={{ padding: '12px' }}>{product.brand}</td>
-                    <td style={{ padding: '12px' }}>{product.subCategory}</td>
-                    <td style={{ padding: '12px', fontWeight: 'bold' }}>{product.defaultPrice}</td>
-                    <td style={{
-                      padding: '12px',
-                      color: product.stock === 'In Stock' ? 'green' : 'red',
-                      fontWeight: 'bold'
-                    }}>
-                      {product.stock}
-                    </td>
+        {error && (
+          <div className="status-banner status-error">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {products.length > 0 && (
+          <div>
+            <h2>Products in Database ({products.length})</h2>
+            <div className="theme-table-wrap">
+              <table className="theme-table">
+                <thead>
+                  <tr>
+                    <th>Product Name</th>
+                    <th>Brand</th>
+                    <th>Category</th>
+                    <th>Default Price</th>
+                    <th>Original Price</th>
+                    <th>Stock</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {products.map((product) => (
+                    <tr key={product._id}>
+                      <td>{product.name}</td>
+                      <td>{product.brand}</td>
+                      <td>{product.subCategory}</td>
+                      <td style={{ fontWeight: 'bold' }}>{product.defaultPrice}</td>
+                      <td>{product.originalPrice}</td>
+                      <td
+                        style={{
+                          color: product.stock === 'In Stock' ? 'var(--success-text)' : 'var(--danger)',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        {product.stock}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-          {/* Navigation Links */}
-          <div style={{
-            padding: '20px',
-            backgroundColor: '#e7f3ff',
-            borderRadius: '8px',
-            marginTop: '20px'
-          }}>
-            <h3>🔗 Navigation Links:</h3>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '10px' }}>
-                <Link href="/products" style={{ color: '#007bff', textDecoration: 'none', fontSize: '16px' }}>
-                  → View All Products
-                </Link>
-              </li>
-              <li style={{ marginBottom: '10px' }}>
-                <Link href="/admin" style={{ color: '#007bff', textDecoration: 'none', fontSize: '16px' }}>
-                  → Go to Admin Panel
-                </Link>
-              </li>
-              <li>
-                <Link href="/" style={{ color: '#007bff', textDecoration: 'none', fontSize: '16px' }}>
-                  → Go to Homepage
-                </Link>
-              </li>
-            </ul>
+            <div className="theme-card status-info" style={{ marginTop: '20px' }}>
+              <h3>Navigation Links:</h3>
+              <ul style={{ listStyle: 'none', padding: 0, marginTop: '0.75rem' }}>
+                <li style={{ marginBottom: '10px' }}>
+                  <Link href="/products" className="theme-link">View All Products</Link>
+                </li>
+                <li style={{ marginBottom: '10px' }}>
+                  <Link href="/admin" className="theme-link">Go to Admin Panel</Link>
+                </li>
+                <li>
+                  <Link href="/" className="theme-link">Go to Homepage</Link>
+                </li>
+              </ul>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {!loading && !error && products.length === 0 && (
-        <div style={{
-          padding: '20px',
-          backgroundColor: '#fff3cd',
-          borderRadius: '8px',
-          marginTop: '20px'
-        }}>
-          ⚠️ No products found in database
-        </div>
-      )}
-    </div>
+        {!loading && !error && products.length === 0 && (
+          <div className="status-banner status-warning" style={{ marginTop: '20px' }}>
+            No products found in database
+          </div>
+        )}
+      </main>
+      <Footer />
+    </>
   );
 }

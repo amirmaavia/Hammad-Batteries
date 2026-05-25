@@ -3,15 +3,17 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Filter, ImageOff, SlidersHorizontal, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { CatalogItem, loadCatalogItems } from '../../lib/catalog';
+import { CatalogItem } from '../../lib/catalog';
 import { cartStore } from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchItems } from '@/store/itemsSlice';
 
 function StoreContent() {
   const searchParams = useSearchParams();
+  const dispatch = useAppDispatch();
+  const { items: storeItems, loading, loaded } = useAppSelector((state) => state.items);
 
-  const [items, setItems] = useState<CatalogItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [selectedBrand, setSelectedBrand] = useState<string>(searchParams.get('brand') || 'All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -21,11 +23,12 @@ function StoreContent() {
   const [addedId, setAddedId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadCatalogItems().then(data => {
-      setItems(data.reverse());
-      setLoading(false);
-    });
-  }, []);
+    if (!loaded) {
+      dispatch(fetchItems());
+    }
+  }, [dispatch, loaded]);
+
+  const items = useMemo(() => [...storeItems].reverse(), [storeItems]);
 
   const brands = useMemo(() => ['All', ...Array.from(new Set(items.map(i => i.brand)))], [items]);
   const brandItems = useMemo(

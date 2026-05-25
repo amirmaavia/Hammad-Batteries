@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { StoreProvider } from "@/store/StoreProvider";
 export const metadata: Metadata = {
-  title: "Hammad Batteries | Professional Mobile Battery Shop",
+  title: "Hammad Batteries",
   description: "Premium mobile batteries for Samsung, Apple, and more. Auto-updated latest models available at Hammad Batteries.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +32,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        {children}
+        <StoreProvider>{children}</StoreProvider>
       </body>
     </html>
   );

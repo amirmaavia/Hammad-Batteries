@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { MessageCircle, Search, ShoppingCart, Phone, X, ChevronDown } from 'lucide-react';
-import { getWhatsAppLink, DISPLAY_PHONE_NUMBER } from '../lib/site';
+import { getCartOrderMessage, getWhatsAppLink, DISPLAY_PHONE_NUMBER, WHATSAPP_MESSAGES } from '../lib/site';
 import ThemeToggle from './ThemeToggle';
-import logo from '../assets/logo/logo.png';
+import logoLight from '../assets/logo/logo-light.png';
+import logoDark from '../assets/logo/logo-dark.png';
 
 export type CartItem = {
   _id: string;
@@ -62,8 +63,8 @@ export default function Navbar() {
   };
 
   useEffect(() => {
-    refreshCart();
     window.addEventListener('cart-update', refreshCart);
+    queueMicrotask(refreshCart);
     return () => window.removeEventListener('cart-update', refreshCart);
   }, []);
 
@@ -79,7 +80,7 @@ export default function Navbar() {
       {/* ── TOP UTILITY BAR ── */}
       <div className="top-bar">
         <div className="container top-bar-inner">
-          <a href={getWhatsAppLink("Assalam o Alaikum!")} target="_blank" rel="noreferrer" className="top-bar-phone">
+          <a href={getWhatsAppLink(WHATSAPP_MESSAGES.productSupport)} target="_blank" rel="noreferrer" className="top-bar-phone">
             <Phone size={14} />
             <span>{DISPLAY_PHONE_NUMBER}</span>
           </a>
@@ -97,7 +98,8 @@ export default function Navbar() {
         <div className="container header-main">
           {/* Logo */}
           <Link href="/" className="logo cursor-pointer">
-            <Image src={logo} alt="Hammad Batteries logo" className="logo-image" priority />
+            <Image src={logoLight} alt="Hammad Batteries logo" className="logo-image logo-image-light" priority />
+            <Image src={logoDark} alt="Hammad Batteries logo" className="logo-image logo-image-dark" priority />
           </Link>
 
           {/* Search Bar */}
@@ -144,7 +146,7 @@ export default function Navbar() {
             <Link href="/#brands" className="sec-nav-link" onClick={() => setMobileMenuOpen(false)}>📱 Brands</Link>
             <Link href="/#new-arrivals" className="sec-nav-link" onClick={() => setMobileMenuOpen(false)}>✨ New Arrivals</Link>
             <a
-              href={getWhatsAppLink("Assalam o Alaikum, I need support.")}
+              href={getWhatsAppLink(WHATSAPP_MESSAGES.productSupport)}
               target="_blank" rel="noreferrer"
               className="sec-nav-link"
               onClick={() => setMobileMenuOpen(false)}
@@ -152,7 +154,7 @@ export default function Navbar() {
               💬 Support Center
             </a>
             <div className="sec-nav-right">
-              <a href={getWhatsAppLink("Assalam o Alaikum, I want to ask about batteries.")} target="_blank" rel="noreferrer" className="btn btn-whatsapp btn-sm btn-mobile-icon">
+              <a href={getWhatsAppLink(WHATSAPP_MESSAGES.generalInquiry)} target="_blank" rel="noreferrer" className="btn btn-whatsapp btn-sm btn-mobile-icon">
                 <MessageCircle size={16} />
                 <span className="btn-text">WhatsApp</span>
               </a>
@@ -208,9 +210,7 @@ export default function Navbar() {
               <div className="cart-drawer-footer">
                 <button className="btn btn-outline" style={{ fontSize: '0.85rem' }} onClick={() => cartStore.clear()}>Clear Cart</button>
                 <a
-                  href={getWhatsAppLink(
-                    `Assalam o Alaikum! I want to order:\n${cartItems.map(i => `• ${i.name} x${i.quantity} — ${i.defaultPrice}`).join('\n')}`
-                  )}
+                  href={getWhatsAppLink(getCartOrderMessage(cartItems))}
                   target="_blank"
                   rel="noreferrer"
                   className="btn btn-whatsapp"

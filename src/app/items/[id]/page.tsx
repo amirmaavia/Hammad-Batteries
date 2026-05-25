@@ -6,9 +6,11 @@ import { useParams } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
 import { ArrowLeft, BadgeInfo, ImageOff, MessageCircle, PackageCheck, Smartphone, Tag } from 'lucide-react';
-import { CatalogItem, loadCatalogItemsById } from '../../../lib/catalog';
-import { getWhatsAppLink } from '../../../lib/site';
-import { useEffect, useState } from 'react';
+import { CatalogItem } from '../../../lib/catalog';
+import { getProductInquiryMessage, getWhatsAppLink } from '../../../lib/site';
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchItemById } from '@/store/itemsSlice';
 
 function ItemImage({ item }: { item: CatalogItem }) {
   if (item.image) {
@@ -26,18 +28,15 @@ function ItemImage({ item }: { item: CatalogItem }) {
 export default function ItemDetailPage() {
   const params = useParams<{ id: string }>();
   const itemId = params.id; // Keep as string for _id comparison
-  const [item, setItem] = useState<CatalogItem | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const { items, loading } = useAppSelector((state) => state.items);
+  const item = items.find((currentItem) => String(currentItem._id || currentItem.id) === itemId);
 
   useEffect(() => {
-    const loadItem = async () => {
-      setLoading(true);
-      const foundItem: CatalogItem | null = await loadCatalogItemsById(itemId);
-      setItem(foundItem  ?? undefined);
-      setLoading(false);
-    };
-    loadItem();
-  }, [itemId]);
+    if (!item) {
+      dispatch(fetchItemById(itemId));
+    }
+  }, [dispatch, item, itemId]);
 
   return (
     <>
@@ -107,7 +106,7 @@ export default function ItemDetailPage() {
 
                   <div className="product-detail-actions">
                     <a
-                      href={getWhatsAppLink(`Assalam o Alaikum, I'm interested in ${item.name} (${item.defaultPrice}).`)}
+                      href={getWhatsAppLink(getProductInquiryMessage(item.name, item.defaultPrice))}
                       target="_blank"
                       rel="noreferrer"
                       className="btn btn-whatsapp"

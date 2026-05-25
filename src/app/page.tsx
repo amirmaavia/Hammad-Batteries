@@ -10,8 +10,10 @@ import {
   ArrowRight, MessageCircle, Zap,
   Shield, Truck, BadgeDollarSign, Lock, Star, ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { CatalogItem, loadCatalogItems } from '../lib/catalog';
-import { getWhatsAppLink } from '../lib/site';
+import { CatalogItem } from '../lib/catalog';
+import { getWhatsAppLink, WHATSAPP_MESSAGES } from '../lib/site';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchItems } from '@/store/itemsSlice';
 
 /* ────────────────── Services slider data ────────────────── */
 const SERVICES = [
@@ -129,17 +131,17 @@ function ServicesSlider() {
 }
 
 export default function Home() {
-  const [models, setModels] = useState<CatalogItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const { items, loading, loaded } = useAppSelector((state) => state.items);
   const [addedId, setAddedId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadCatalogItems().then(items => {
-      const reversed = [...items].reverse();
-      setModels(reversed);
-      setLoading(false);
-    });
-  }, []);
+    if (!loaded) {
+      dispatch(fetchItems());
+    }
+  }, [dispatch, loaded]);
+
+  const models = useMemo(() => [...items].reverse(), [items]);
 
   // New Arrivals = latest 4 items
   const newArrivals = models.slice(0, 4);
@@ -192,8 +194,8 @@ export default function Home() {
         <section id="home" className="hero">
           <div className="hero-bg-glow" />
           <div className="container" style={{ position: 'relative', zIndex: 10 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem 1rem', borderRadius: '9999px', color: '#60a5fa', marginBottom: '1.5rem', fontSize: '0.875rem', fontWeight: 600 }}>
-              <Zap size={16} fill="#60a5fa" /> Professional Mobile Battery Shop
+            <div className="hero-kicker">
+              <Zap size={16} fill="currentColor" /> Professional Mobile Battery Shop
             </div>
             <h1 className="title">
               Power Up Your Devices <br />
@@ -206,7 +208,7 @@ export default function Home() {
               <Link href="/store" className="btn btn-primary btn-mobile-icon" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
                 <span className="btn-text">Shop Now</span> <ArrowRight size={20} />
               </Link>
-              <a href={getWhatsAppLink("Assalam o Alaikum, I want to ask about your battery items.")} target="_blank" rel="noreferrer" className="btn btn-outline btn-mobile-icon" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
+              <a href={getWhatsAppLink(WHATSAPP_MESSAGES.generalInquiry)} target="_blank" rel="noreferrer" className="btn btn-outline btn-mobile-icon" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
                 <MessageCircle size={20} color="#25d366" /> <span className="btn-text">Chat with Us</span>
               </a>
             </div>
@@ -290,7 +292,7 @@ export default function Home() {
 
       {/* Floating WhatsApp */}
       <a
-        href={getWhatsAppLink("Assalam o Alaikum, I want to contact Hammad Batteries.")}
+        href={getWhatsAppLink(WHATSAPP_MESSAGES.productSupport)}
         target="_blank"
         rel="noreferrer"
         className="floating-wa"

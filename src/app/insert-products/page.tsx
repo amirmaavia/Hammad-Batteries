@@ -2,9 +2,13 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { API_ROUTES } from '../../lib/api-routes';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
+import { useAppDispatch } from '@/store/hooks';
+import { saveItem } from '@/store/itemsSlice';
 
 export default function InsertProductsPage() {
+  const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -28,16 +32,7 @@ export default function InsertProductsPage() {
 
     try {
       for (const product of sampleProducts) {
-        const response = await fetch(API_ROUTES.items, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(product),
-        });
-
-        if (!response.ok) {
-          const result = await response.json();
-          throw new Error(result.error || 'Failed to insert product');
-        }
+        await dispatch(saveItem(product)).unwrap();
       }
 
       setMessage(`✅ Successfully inserted ${sampleProducts.length} products into database!`);
@@ -49,67 +44,47 @@ export default function InsertProductsPage() {
   };
 
   return (
-    <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif', maxWidth: '600px', margin: '0 auto' }}>
-      <h1>Insert Sample Battery Products</h1>
+    <>
+      <Navbar />
+      <main className="page-shell page-shell-narrow">
+        <h1 className="title" style={{ fontSize: '2.5rem' }}>Insert Sample Battery Products</h1>
       
-      <div style={{ 
-        padding: '20px', 
-        backgroundColor: '#f0f0f0', 
-        borderRadius: '8px',
-        marginBottom: '20px'
-      }}>
-        <p>Click the button below to insert 4 sample battery products into your MongoDB database.</p>
-      </div>
-
-      <button
-        onClick={insertSampleProducts}
-        disabled={loading}
-        style={{
-          padding: '12px 24px',
-          fontSize: '16px',
-          backgroundColor: loading ? '#ccc' : '#007bff',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: loading ? 'not-allowed' : 'pointer',
-          marginBottom: '20px'
-        }}
-      >
-        {loading ? 'Inserting...' : 'Insert Sample Products'}
-      </button>
-
-      {message && (
-        <div style={{
-          padding: '15px',
-          backgroundColor: '#d4edda',
-          color: '#155724',
-          borderRadius: '4px',
-          marginBottom: '10px'
-        }}>
-          {message}
+        <div className="theme-card" style={{ marginBottom: '20px' }}>
+          <p>Click the button below to insert sample battery products into your MongoDB database.</p>
         </div>
-      )}
 
-      {error && (
-        <div style={{
-          padding: '15px',
-          backgroundColor: '#f8d7da',
-          color: '#721c24',
-          borderRadius: '4px'
-        }}>
-          {error}
+        <button
+          className="btn btn-primary"
+          onClick={insertSampleProducts}
+          disabled={loading}
+          style={{ marginBottom: '20px' }}
+        >
+          {loading ? 'Inserting...' : 'Insert Sample Products'}
+        </button>
+
+        {message && (
+          <div className="status-banner status-success">
+            {message}
+          </div>
+        )}
+
+        {error && (
+          <div className="status-banner status-error">
+            {error}
+          </div>
+        )}
+
+        <div className="theme-card status-info" style={{ marginTop: '30px' }}>
+          <h3>Next Steps:</h3>
+          <ol style={{ paddingLeft: '1.25rem', marginTop: '0.75rem' }}>
+            <li>Make sure MongoDB is running on localhost:27017</li>
+            <li>Click the button above to insert sample products</li>
+            <li>Visit <Link className="theme-link" href="/products">/products</Link> to view all products</li>
+            <li>Visit <Link className="theme-link" href="/">/</Link> to see products on homepage</li>
+          </ol>
         </div>
-      )}
-
-      <div style={{ marginTop: '30px', padding: '20px', backgroundColor: '#e7f3ff', borderRadius: '4px' }}>
-        <h3>Next Steps:</h3>
-        <ol>
-          <li>Make sure MongoDB is running on localhost:27017</li>
-          <li>Click the button above to insert sample products</li>
-          <li>Visit <Link href="/products">/products</Link> to view all products</li>
-          <li>Visit <Link href="/">/</Link> to see products on homepage</li>
-        </ol>
-      </div>
-    </div>
+      </main>
+      <Footer />
+    </>
   );
 }

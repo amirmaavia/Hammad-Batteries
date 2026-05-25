@@ -5,9 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { CatalogItem, DEFAULT_ITEMS, loadCatalogItems, saveCatalogItems, deleteItemFromCatalog } from '../../lib/catalog';
-import { DISPLAY_PHONE_NUMBER, getWhatsAppLink } from '../../lib/site';
+import { CatalogItem } from '../../lib/catalog';
+import { DISPLAY_PHONE_NUMBER, getWhatsAppLink, WHATSAPP_MESSAGES } from '../../lib/site';
 import { Headphones, ImagePlus, LockKeyhole, LogOut, Pencil, Plus, RotateCcw, Save, Trash2, X } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { deleteItemById, fetchItems, saveItem } from '@/store/itemsSlice';
 
 type ItemForm = {
   name: string;
@@ -38,7 +40,8 @@ const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'admin123';
 
 export default function AdminPage() {
-  const [items, setItems] = useState<CatalogItem[]>(DEFAULT_ITEMS);
+  const dispatch = useAppDispatch();
+  const { items, loading, loaded } = useAppSelector((state) => state.items);
   const [form, setForm] = useState<ItemForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [username, setUsername] = useState('');
@@ -51,18 +54,12 @@ export default function AdminPage() {
 
     return window.localStorage.getItem(ADMIN_AUTH_KEY) === 'true';
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadItems = async () => {
-      setLoading(true);
-      const loadedItems = await loadCatalogItems();
-      setItems(loadedItems);
-      setLoading(false);
-    };
-
-    loadItems();
-  }, []);
+    if (!loaded) {
+      dispatch(fetchItems());
+    }
+  }, [dispatch, loaded]);
 
   const sortedItems = useMemo(
     () => [...items].sort((firstItem, secondItem) => {
@@ -122,17 +119,15 @@ export default function AdminPage() {
       return;
     }
     if (editingId === null) {
-      await saveCatalogItems({ ...cleanItem });
+      await dispatch(saveItem({ ...cleanItem })).unwrap();
     } else {
       // const updatedItems = items.map((item) => {
       //   const itemId = item._id ? item._id.toString() : item.id?.toString();
       //   const editId = editingId.toString();
       //   return itemId === editId ? { ...item, ...cleanItem } : item;;
-      await saveCatalogItems({ ...cleanItem, _id: editingId } as CatalogItem);
+      await dispatch(saveItem({ ...cleanItem, _id: editingId } as CatalogItem)).unwrap();
     }
 
-    const reloadedItems = await loadCatalogItems();
-    setItems(reloadedItems);
     setForm(EMPTY_FORM);
     setEditingId(null);
   };
@@ -162,11 +157,8 @@ export default function AdminPage() {
     });
 
     if (itemToDelete?._id) {
-      await deleteItemFromCatalog(itemToDelete._id.toString());
+      await dispatch(deleteItemById(itemToDelete._id.toString())).unwrap();
     }
-
-    const reloadedItems = await loadCatalogItems();
-    setItems(reloadedItems);
 
     if (editingId === id) {
       setEditingId(null);
@@ -177,8 +169,7 @@ export default function AdminPage() {
   const handleReset = async () => {
     // await saveCatalogItems(DEFAULT_ITEMS);
     //remove line
-    const reloadedItems = await loadCatalogItems();
-    setItems(reloadedItems);
+    await dispatch(fetchItems()).unwrap();
     setEditingId(null);
     setForm(EMPTY_FORM);
   };
@@ -288,7 +279,7 @@ export default function AdminPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <h2 style={{ fontSize: '1.75rem' }}>{editingId === null ? 'Add Item' : 'Edit Item'}</h2>
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end' }}>
-                    <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
+                    <span className="badge status-success">
                       Contact: {DISPLAY_PHONE_NUMBER}
                     </span>
                     <button type="button" className="btn btn-outline btn-mobile-icon" onClick={handleLogout} aria-label="Logout" title="Logout">
@@ -407,7 +398,7 @@ export default function AdminPage() {
               <div className="card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <h2 style={{ fontSize: '1.75rem' }}>Current Items</h2>
-                  <a href={getWhatsAppLink("Assalam o Alaikum, I want admin support for the battery website.")} target="_blank" rel="noreferrer" className="btn btn-whatsapp btn-mobile-icon" aria-label="Support" title="Support">
+                  <a href={getWhatsAppLink(WHATSAPP_MESSAGES.adminSupport)} target="_blank" rel="noreferrer" className="btn btn-whatsapp btn-mobile-icon" aria-label="Support" title="Support">
                     <Headphones size={18} />
                     <span className="btn-text">Support</span>
                   </a>

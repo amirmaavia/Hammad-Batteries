@@ -2,14 +2,16 @@ import React from 'react';
 import Image from 'next/image';
 import { Facebook, Instagram, Twitter, MapPin, Mail, Phone } from 'lucide-react';
 import { DISPLAY_PHONE_NUMBER } from '../lib/site';
-import logo from '../assets/logo/logo.png';
+import logoLight from '../assets/logo/logo-light.png';
+import logoDark from '../assets/logo/logo-dark.png';
 
 export default function Footer() {
     return (
         <footer style={{ background: 'var(--glass-bg)', padding: '4rem 0 2rem', borderTop: '1px solid var(--glass-border)' }}>
             <div className="container grid grid-cols-4" style={{ gap: '2rem' }}>
                 <div>
-                    <Image src={logo} alt="Hammad Batteries logo" className="footer-logo" />
+                    <Image src={logoLight} alt="Hammad Batteries logo" className="footer-logo logo-image-light" />
+                    <Image src={logoDark} alt="Hammad Batteries logo" className="footer-logo logo-image-dark" />
                     <p className="subtitle" style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>
                         The most reliable and dynamically updated mobile battery shop. Automatic addition of recent Samsung and Apple models.
                     </p>

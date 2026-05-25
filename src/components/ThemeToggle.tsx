@@ -36,7 +36,7 @@ export default function ThemeToggle() {
         applyTheme(updatedTheme);
       }}
     >
-      {/* {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />} */}
+      {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
       <span className="btn-text">{theme === 'dark' ? 'Bright' : 'Dark'}</span>
     </button>
   );

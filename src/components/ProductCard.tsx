@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ImageOff, MessageCircle, ShoppingCart } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { CatalogItem } from '../lib/catalog';
-import { getWhatsAppLink } from '../lib/site';
+import { getProductInquiryMessage, getWhatsAppLink } from '../lib/site';
 
 type ProductCardProps = {
   item: CatalogItem;
@@ -99,7 +99,7 @@ export default function ProductCard({
           ) : null}
 
           <a
-            href={getWhatsAppLink(`Assalam o Alaikum, I'm interested in ${item.name}`)}
+            href={getWhatsAppLink(getProductInquiryMessage(item.name, item.defaultPrice))}
             target="_blank"
             rel="noreferrer"
             className="btn btn-whatsapp btn-mobile-icon"
