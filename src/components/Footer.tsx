@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Facebook, Instagram, Twitter, MapPin, Mail, Phone } from 'lucide-react';
 import { DISPLAY_PHONE_NUMBER } from '../lib/site';
 import logoLight from '../assets/logo/logo-light.png';
@@ -35,10 +36,10 @@ export default function Footer() {
                 <div>
                     <h4 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--heading)' }}>Useful Links</h4>
                     <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        <li><a href="#" className="nav-link">About Us</a></li>
-                        <li><a href="#" className="nav-link">Return Policy</a></li>
-                        <li><a href="#" className="nav-link">Warranty info</a></li>
-                        <li><a href="#" className="nav-link">Contact Support</a></li>
+                        <li><Link href="/about-us" className="nav-link">About Us</Link></li>
+                        <li><Link href="/return-policy" className="nav-link">Return Policy</Link></li>
+                        <li><Link href="/warranty-info" className="nav-link">Warranty info</Link></li>
+                        <li><Link href="/contact-support" className="nav-link">Contact Support</Link></li>
                     </ul>
                 </div>
 
