@@ -16,10 +16,10 @@ function StoreContent() {
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [selectedBrand, setSelectedBrand] = useState<string>(searchParams.get('brand') || 'All');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || 'All');
   const [selectedStock, setSelectedStock] = useState<string>('All');
   const [sortBy, setSortBy] = useState<string>('newest');
-  const [filtersOpen, setFiltersOpen] = useState(Boolean(searchParams.get('brand')));
+  const [filtersOpen, setFiltersOpen] = useState(Boolean(searchParams.get('brand') || searchParams.get('category')));
   const [addedId, setAddedId] = useState<string | null>(null);
 
   useEffect(() => {

@@ -84,7 +84,7 @@ export default function Navbar() {
             <Phone size={14} />
             <span>{DISPLAY_PHONE_NUMBER}</span>
           </a>
-          <span className="top-bar-center">🚚 Free Delivery on orders above Rs. 3,000</span>
+          <span className="top-bar-center">🚚 Free Delivery on orders above Rs. 10,000</span>
           <button className="top-bar-cart" onClick={() => setCartOpen(true)} aria-label="Open cart">
             <ShoppingCart size={16} />
             <span>Cart</span>
@@ -143,7 +143,7 @@ export default function Navbar() {
           <div className="container secondary-nav-inner">
             <Link href="/" className="sec-nav-link" onClick={() => setMobileMenuOpen(false)}>🏠 Home</Link>
             <Link href="/store" className="sec-nav-link" onClick={() => setMobileMenuOpen(false)}>🛒 Store</Link>
-            <Link href="/#brands" className="sec-nav-link" onClick={() => setMobileMenuOpen(false)}>📱 Brands</Link>
+            <Link href="/#categories" className="sec-nav-link" onClick={() => setMobileMenuOpen(false)}>📱 Categories</Link>
             <Link href="/#new-arrivals" className="sec-nav-link" onClick={() => setMobileMenuOpen(false)}>✨ New Arrivals</Link>
             <a
               href={getWhatsAppLink(WHATSAPP_MESSAGES.productSupport)}

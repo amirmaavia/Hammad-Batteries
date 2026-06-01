@@ -27,7 +27,7 @@ const SERVICES = [
   {
     icon: <Truck size={32} color="#60a5fa" />,
     title: 'Free Delivery',
-    desc: 'Free home delivery on all orders above Rs. 3,000 across Pakistan.',
+    desc: 'Free home delivery on all orders above Rs. 10,000 across Pakistan.',
     color: '#60a5fa',
     bg: 'rgba(96, 165, 250, 0.12)',
   },
@@ -146,31 +146,31 @@ export default function Home() {
   // New Arrivals = latest 4 items
   const newArrivals = models.slice(0, 4);
 
-  const groupedBrands = useMemo(() => (
+  const groupedCategories = useMemo(() => (
     models.reduce<Record<string, string[]>>((acc, m) => {
-        if (!acc[m.brand]) acc[m.brand] = [];
-        if (!acc[m.brand].includes(m.subCategory)) acc[m.brand].push(m.subCategory);
+        if (!acc[m.subCategory]) acc[m.subCategory] = [];
+        if (!acc[m.subCategory].includes(m.brand)) acc[m.subCategory].push(m.brand);
         return acc;
       }, {})
   ), [models]);
 
-  const brandSummaries = useMemo(() => (
-    Object.entries(groupedBrands)
-      .sort(([firstBrand], [secondBrand]) => firstBrand.localeCompare(secondBrand))
-      .map(([brand, subCategories], index) => {
-        const meta = getBrandMeta(brand, index);
-        const categoryPreview = subCategories.slice(0, 3).join(', ');
-        const remainingCount = subCategories.length - 3;
+  const categorySummaries = useMemo(() => (
+    Object.entries(groupedCategories)
+      .sort(([firstCategory], [secondCategory]) => firstCategory.localeCompare(secondCategory))
+      .map(([category, brands], index) => {
+        const meta = getBrandMeta(category, index);
+        const brandPreview = brands.slice(0, 3).join(', ');
+        const remainingCount = brands.length - 3;
 
         return {
-          brand,
-          subCategories,
+          category,
+          brands,
           emoji: meta.emoji,
           color: meta.color,
-          desc: `${subCategories.length} categor${subCategories.length === 1 ? 'y' : 'ies'}${categoryPreview ? `: ${categoryPreview}` : ''}${remainingCount > 0 ? ` +${remainingCount} more` : ''}.`,
+          desc: `${brands.length} brand${brands.length === 1 ? '' : 's'}${brandPreview ? `: ${brandPreview}` : ''}${remainingCount > 0 ? ` +${remainingCount} more` : ''}.`,
         };
       })
-  ), [groupedBrands]);
+  ), [groupedCategories]);
 
   const handleAddToCart = (e: React.MouseEvent, item: CatalogItem) => {
     e.stopPropagation();
@@ -202,7 +202,7 @@ export default function Home() {
               With <span className="text-gradient">Hammad Batteries</span>
             </h1>
             <p className="subtitle" style={{ fontSize: '1.25rem', marginBottom: '2rem', maxWidth: '800px' }}>
-              Pakistan&apos;s most trusted mobile battery supplier — highest quality, lowest prices, and free delivery above Rs. 3,000.
+              Pakistan&apos;s most trusted mobile battery supplier — highest quality, lowest prices, and free delivery above Rs. 10,000.
             </p>
             <div className="hero-actions">
               <Link href="/store" className="btn btn-primary btn-mobile-icon" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
@@ -218,26 +218,26 @@ export default function Home() {
         {/* ── SERVICES SLIDER ── */}
         <ServicesSlider />
 
-        {/* ── BRAND DETAILS BANNER ── */}
-        <section id="brands" className="section brand-banner-section">
+        {/* ── CATEGORY DETAILS BANNER ── */}
+        <section id="categories" className="section brand-banner-section">
           <div className="brand-banner-bg" />
           <div className="container" style={{ position: 'relative', zIndex: 2 }}>
             <div className="section-header">
-              <h2 className="title" style={{ fontSize: '2.5rem' }}>Supported <span className="text-gradient">Brands</span></h2>
-              <p className="subtitle">We cover batteries for every major smartphone brand in Pakistan.</p>
+              <h2 className="title" style={{ fontSize: '2.5rem' }}>Shop by <span className="text-gradient">Categories</span></h2>
+              <p className="subtitle">Find batteries by phone series and model category.</p>
             </div>
             <div className="brands-detail-grid">
               {loading ? (
                 <div style={{ gridColumn: '1 / -1', textAlign: 'center' }}><h3>Loading...</h3></div>
-              ) : brandSummaries.map((b) => (
+              ) : categorySummaries.map((b) => (
                 <Link
-                  key={b.brand}
-                  href={`/store?brand=${encodeURIComponent(b.brand)}`}
+                  key={b.category}
+                  href={`/store?category=${encodeURIComponent(b.category)}`}
                   className="brand-detail-card"
                   style={{ '--brand-color': b.color } as React.CSSProperties}
                 >
                   <div className="brand-emoji">{b.emoji}</div>
-                  <h3 className="brand-name">{b.brand}</h3>
+                  <h3 className="brand-name">{b.category}</h3>
                   <p className="brand-desc">{b.desc}</p>
                   <span className="btn btn-sm brand-filter-btn" style={{ marginTop: '0.75rem' }}>
                     View Products →

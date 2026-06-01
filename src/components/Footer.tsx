@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter, MapPin, Mail, Phone } from 'lucide-react';
 import { DISPLAY_PHONE_NUMBER } from '../lib/site';
+import FooterBrandLinks from './FooterBrandLinks';
 import logoLight from '../assets/logo/logo-light.png';
 import logoDark from '../assets/logo/logo-dark.png';
 
@@ -24,13 +25,8 @@ export default function Footer() {
                 </div>
 
                 <div>
-                    <h4 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--heading)' }}>Categories</h4>
-                    <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        <li><a href="#" className="nav-link">Samsung Series</a></li>
-                        <li><a href="#" className="nav-link">Apple iPhones</a></li>
-                        <li><a href="#" className="nav-link">Huawei Options</a></li>
-                        <li><a href="#" className="nav-link">Oppo / Vivo</a></li>
-                    </ul>
+                    <h4 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--heading)' }}>Brands</h4>
+                    <FooterBrandLinks />
                 </div>
 
                 <div>
