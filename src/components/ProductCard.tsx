@@ -2,10 +2,11 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ImageOff, MessageCircle, ShoppingCart } from 'lucide-react';
+import { ImageOff, ShoppingCart } from 'lucide-react';
 import type { MouseEvent } from 'react';
+import { useState } from 'react';
 import { CatalogItem } from '../lib/catalog';
-import { getProductInquiryMessage, getWhatsAppLink } from '../lib/site';
+import { cartStore } from '../lib/cart';
 
 type ProductCardProps = {
   item: CatalogItem;
@@ -27,10 +28,31 @@ export default function ProductCard({
   const router = useRouter();
   const id = String(item._id || item.id);
   const detailHref = `/items/${id}`;
+  const [localAdded, setLocalAdded] = useState(false);
 
   const openDetail = () => {
     router.push(detailHref);
   };
+
+  const addToCart = (event: MouseEvent) => {
+    event.stopPropagation();
+
+    if (onAddToCart) {
+      onAddToCart(event, item);
+    } else {
+      cartStore.addItem({
+        _id: id,
+        name: item.name,
+        brand: item.brand,
+        defaultPrice: item.defaultPrice,
+        image: item.image,
+      });
+      setLocalAdded(true);
+      setTimeout(() => setLocalAdded(false), 1500);
+    }
+  };
+
+  const added = isAdded || localAdded;
 
   return (
     <div
@@ -81,36 +103,19 @@ export default function ProductCard({
         <span className="price">
           {item.defaultPrice}
           {item.originalPrice && item.originalPrice !== item.defaultPrice && (
-            <small className="price-strike">  {item.originalPrice}</small>
+            <small className="price-strike"> {item.originalPrice}</small>
           )}
         </span>
 
-        <div style={{ display: 'flex', gap: '0.4rem' }}>
-          {onAddToCart ? (
-            <button
-              className={`btn btn-sm ${isAdded ? 'btn-success' : 'btn-outline'}`}
-              style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
-              onClick={(event) => onAddToCart(event, item)}
-              title="Add to Cart"
-            >
-              <ShoppingCart size={14} />
-              {isAdded ? '✓' : ''}
-            </button>
-          ) : null}
-
-          <a
-            href={getWhatsAppLink(getProductInquiryMessage(item.name, item.defaultPrice))}
-            target="_blank"
-            rel="noreferrer"
-            className="btn btn-whatsapp btn-mobile-icon"
-            style={{ padding: '0.4rem 0.8rem' }}
-            aria-label={`Ask about ${item.name} on WhatsApp`}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <MessageCircle size={14} />
-            {/* <span className="btn-text" style={{ fontSize: '0.8rem' }}></span> */}
-          </a>
-        </div>
+        <button
+          className={`btn btn-sm ${added ? 'btn-success' : 'btn-outline'}`}
+          style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
+          onClick={addToCart}
+          title="Add to Cart"
+        >
+          <ShoppingCart size={14} />
+          <span className="btn-text">{added ? 'Added' : 'Add'}</span>
+        </button>
       </div>
     </div>
   );

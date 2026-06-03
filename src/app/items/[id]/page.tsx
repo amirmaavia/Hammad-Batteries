@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
-import { ArrowLeft, BadgeInfo, ImageOff, MessageCircle, PackageCheck, Smartphone, Tag } from 'lucide-react';
+import { ArrowLeft, BadgeInfo, ImageOff, PackageCheck, ShoppingCart, Smartphone, Tag } from 'lucide-react';
 import { CatalogItem } from '../../../lib/catalog';
-import { getProductInquiryMessage, getWhatsAppLink } from '../../../lib/site';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchItemById } from '@/store/itemsSlice';
+import { cartStore } from '@/lib/cart';
 
 function ItemImage({ item }: { item: CatalogItem }) {
   if (item.image) {
@@ -31,12 +31,26 @@ export default function ItemDetailPage() {
   const dispatch = useAppDispatch();
   const { items, loading } = useAppSelector((state) => state.items);
   const item = items.find((currentItem) => String(currentItem._id || currentItem.id) === itemId);
+  const [added, setAdded] = useState(false);
 
   useEffect(() => {
     if (!item) {
       dispatch(fetchItemById(itemId));
     }
   }, [dispatch, item, itemId]);
+
+  const handleAddToCart = () => {
+    if (!item) return;
+    cartStore.addItem({
+      _id: String(item._id || item.id),
+      name: item.name,
+      brand: item.brand,
+      defaultPrice: item.defaultPrice,
+      image: item.image,
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
+  };
 
   return (
     <>
@@ -105,15 +119,10 @@ export default function ItemDetailPage() {
                   </div>
 
                   <div className="product-detail-actions">
-                    <a
-                      href={getWhatsAppLink(getProductInquiryMessage(item.name, item.defaultPrice))}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn btn-whatsapp"
-                    >
-                      <MessageCircle size={18} />
-                      Ask on WhatsApp
-                    </a>
+                    <button className={`btn ${added ? 'btn-success' : 'btn-primary'}`} onClick={handleAddToCart}>
+                      <ShoppingCart size={18} />
+                      {added ? 'Added to Cart' : 'Add to Cart'}
+                    </button>
                     <Link href="/admin" className="btn btn-outline">
                       View in Admin
                     </Link>

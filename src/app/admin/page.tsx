@@ -1,15 +1,18 @@
 'use client';
 
-import React, { ChangeEvent, FormEvent, useMemo, useState, useEffect } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
-import { CatalogItem } from '../../lib/catalog';
-import { DISPLAY_PHONE_NUMBER, getWhatsAppLink, WHATSAPP_MESSAGES } from '../../lib/site';
-import { Headphones, ImagePlus, LockKeyhole, LogOut, Pencil, Plus, RotateCcw, Save, Trash2, X } from 'lucide-react';
+import Link from 'next/link';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import { Boxes, ImagePlus, LayoutDashboard, Percent, Plus, Save, Shield, ShoppingBag, Trash2, UsersRound, X } from 'lucide-react';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import type { CatalogItem } from '@/lib/catalog';
+import { deleteDiscount, getCurrentUser, getDiscounts, getOrders, getUsers, saveDiscount, updateDiscount, updateOrderStatus, updateUserRole, type StoreDiscount, type StoreOrder, type StoreUser, type UserRole } from '@/lib/ecommerce';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { deleteItemById, fetchItems, saveItem } from '@/store/itemsSlice';
+
+type AdminTab = 'dashboard' | 'products' | 'orders' | 'discounts' | 'users';
 
 type ItemForm = {
   name: string;
@@ -20,7 +23,7 @@ type ItemForm = {
   originalPrice: string;
   stock: string;
   image: string;
-  imageFit: NonNullable<CatalogItem["imageFit"]>;
+  imageFit: NonNullable<CatalogItem['imageFit']>;
 };
 
 const EMPTY_FORM: ItemForm = {
@@ -35,25 +38,38 @@ const EMPTY_FORM: ItemForm = {
   imageFit: 'fit',
 };
 
-const ADMIN_AUTH_KEY = 'hammad-batteries-admin-auth';
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'admin123';
+const tabs: Array<{ id: AdminTab; label: string; icon: ReactNode }> = [
+  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+  { id: 'products', label: 'Products', icon: <Boxes size={16} /> },
+  { id: 'orders', label: 'Orders', icon: <ShoppingBag size={16} /> },
+  { id: 'discounts', label: 'Discounts', icon: <Percent size={16} /> },
+  { id: 'users', label: 'Users', icon: <UsersRound size={16} /> },
+];
 
 export default function AdminPage() {
   const dispatch = useAppDispatch();
   const { items, loading, loaded } = useAppSelector((state) => state.items);
+  const [currentUser, setCurrentUser] = useState<StoreUser | null>(null);
+  const [tab, setTab] = useState<AdminTab>('dashboard');
   const [form, setForm] = useState<ItemForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | number | null>(null);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
+  const [orders, setOrders] = useState<StoreOrder[]>([]);
+  const [users, setUsers] = useState<StoreUser[]>([]);
+  const [discounts, setDiscounts] = useState<StoreDiscount[]>([]);
+  const [discountForm, setDiscountForm] = useState({ code: '', type: 'percent' as StoreDiscount['type'], value: 10 });
 
-    return window.localStorage.getItem(ADMIN_AUTH_KEY) === 'true';
-  });
+  useEffect(() => {
+    const refreshAdminData = async () => {
+      setCurrentUser(getCurrentUser());
+      setUsers(await getUsers());
+      setOrders(await getOrders());
+      setDiscounts(await getDiscounts());
+    };
+
+    window.addEventListener('auth-update', refreshAdminData);
+    queueMicrotask(refreshAdminData);
+    return () => window.removeEventListener('auth-update', refreshAdminData);
+  }, []);
 
   useEffect(() => {
     if (!loaded) {
@@ -62,20 +78,15 @@ export default function AdminPage() {
   }, [dispatch, loaded]);
 
   const sortedItems = useMemo(
-    () => [...items].sort((firstItem, secondItem) => {
-      const firstId = firstItem._id?.toString() || firstItem.id?.toString() || '';
-      const secondId = secondItem._id?.toString() || secondItem.id?.toString() || '';
-      return secondId.localeCompare(firstId);
-    }),
+    () => [...items].sort((a, b) => String(b._id || b.id || '').localeCompare(String(a._id || a.id || ''))),
     [items]
   );
 
+  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     if (!file.type.startsWith('image/')) {
       window.alert('Please choose an image file only.');
@@ -90,171 +101,85 @@ export default function AdminPage() {
     }
 
     const reader = new FileReader();
-
     reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : '';
-      setForm((currentForm) => ({ ...currentForm, image: result }));
+      setForm((currentForm) => ({ ...currentForm, image: typeof reader.result === 'string' ? reader.result : '' }));
       event.target.value = '';
     };
-
     reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const cleanItem = {
       name: form.name.trim(),
       brand: form.brand.trim(),
       subCategory: form.subCategory.trim(),
       description: form.description.trim(),
       defaultPrice: form.defaultPrice.trim(),
-      originalPrice: form.originalPrice.trim(),
-      stock: form.stock.trim(),
+      originalPrice: form.originalPrice.trim() || form.defaultPrice.trim(),
+      stock: form.stock,
       image: form.image,
       imageFit: form.imageFit,
     };
 
-    if (!cleanItem.name || !cleanItem.brand || !cleanItem.subCategory || !cleanItem.defaultPrice || !cleanItem.originalPrice || !cleanItem.stock) {
-      return;
-    }
-    if (editingId === null) {
-      await dispatch(saveItem({ ...cleanItem })).unwrap();
-    } else {
-      // const updatedItems = items.map((item) => {
-      //   const itemId = item._id ? item._id.toString() : item.id?.toString();
-      //   const editId = editingId.toString();
-      //   return itemId === editId ? { ...item, ...cleanItem } : item;;
-      await dispatch(saveItem({ ...cleanItem, _id: editingId } as CatalogItem)).unwrap();
-    }
+    if (!cleanItem.name || !cleanItem.brand || !cleanItem.subCategory || !cleanItem.defaultPrice) return;
 
+    await dispatch(saveItem(editingId === null ? cleanItem : ({ ...cleanItem, _id: editingId } as CatalogItem))).unwrap();
     setForm(EMPTY_FORM);
     setEditingId(null);
   };
 
   const handleEdit = (item: CatalogItem) => {
+    setTab('products');
     setForm({
       name: item.name,
       brand: item.brand,
       subCategory: item.subCategory,
-      description: item.description ?? '',
+      description: item.description || '',
       defaultPrice: item.defaultPrice,
-      originalPrice: item.originalPrice,
+      originalPrice: item.originalPrice || item.defaultPrice,
       stock: item.stock,
-      image: item.image ?? '',
-      imageFit: item.imageFit ?? 'fit',
+      image: item.image || '',
+      imageFit: item.imageFit || 'fit',
     });
-    const id = item._id ? item._id.toString() : item.id;
+    setEditingId(String(item._id || item.id));
+  };
+
+  const handleDelete = async (item: CatalogItem) => {
+    const id = String(item._id || '');
     if (id) {
-      setEditingId(id);
+      await dispatch(deleteItemById(id)).unwrap();
     }
   };
 
-  const handleDelete = async (id: string | number) => {
-    const itemToDelete = items.find((item) => {
-      const itemId = item._id ? item._id.toString() : item.id;
-      return itemId === id || itemId === id.toString();
-    });
-
-    if (itemToDelete?._id) {
-      await dispatch(deleteItemById(itemToDelete._id.toString())).unwrap();
-    }
-
-    if (editingId === id) {
-      setEditingId(null);
-      setForm(EMPTY_FORM);
-    }
+  const handleRoleChange = async (userId: string, role: UserRole) => {
+    setUsers(await updateUserRole(userId, role));
+    setCurrentUser(getCurrentUser());
   };
 
-  const handleReset = async () => {
-    // await saveCatalogItems(DEFAULT_ITEMS);
-    //remove line
-    await dispatch(fetchItems()).unwrap();
-    setEditingId(null);
-    setForm(EMPTY_FORM);
+  const handleOrderStatus = async (orderId: string, status: StoreOrder['status']) => {
+    setOrders(await updateOrderStatus(orderId, status));
   };
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleDiscountSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    if (username.trim() === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      setIsLoggedIn(true);
-      setLoginError('');
-      window.localStorage.setItem(ADMIN_AUTH_KEY, 'true');
-      return;
-    }
-
-    setLoginError('Wrong username or password.');
+    if (!discountForm.code.trim() || discountForm.value <= 0) return;
+    setDiscounts(await saveDiscount({ ...discountForm, active: true }));
+    setDiscountForm({ code: '', type: 'percent', value: 10 });
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUsername('');
-    setPassword('');
-    setLoginError('');
-    window.localStorage.removeItem(ADMIN_AUTH_KEY);
-  };
-
-  if (!isLoggedIn) {
+  if (!currentUser || currentUser.role !== 'admin') {
     return (
       <>
         <Navbar />
-
-        <main style={{ paddingTop: '7rem' }}>
-          <section className="section">
-            <div className="container admin-login-wrap">
-              <div className="card admin-login-card">
-                <div className="section-header" style={{ marginBottom: '2rem' }}>
-                  <div className="admin-login-icon">
-                    <LockKeyhole size={28} />
-                  </div>
-                  <h1 className="title" style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>Admin Login</h1>
-                  <p className="subtitle" style={{ maxWidth: '520px' }}>
-                    First login, then the admin panel will open.
-                  </p>
-                </div>
-
-                <form onSubmit={handleLogin}>
-                  <div className="form-group">
-                    <label className="form-label">Username</label>
-                    <input
-                      className="form-input"
-                      value={username}
-                      onChange={(event) => setUsername(event.target.value)}
-                      placeholder="Enter username"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Password</label>
-                    <input
-                      type="password"
-                      className="form-input"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="Enter password"
-                    />
-                  </div>
-
-                  {loginError ? (
-                    <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{loginError}</p>
-                  ) : null}
-
-                  <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                    <LockKeyhole size={18} />
-                    <span className="btn-text">Login</span>
-                  </button>
-                </form>
-
-                {/* <div className="admin-login-help">
-                  <p><strong>Username:</strong> admin</p>
-                  <p><strong>Password:</strong> admin123</p>
-                </div> */}
-              </div>
-            </div>
-          </section>
+        <main className="page-shell page-shell-narrow">
+          <div className="theme-card product-empty-state">
+            <Shield size={48} />
+            <h1 className="title" style={{ fontSize: '2.2rem' }}>Admin Access Required</h1>
+            <p className="subtitle">Login with an admin account to manage store operations.</p>
+            <Link href="/login" className="btn btn-primary">Login</Link>
+          </div>
         </main>
-
         <Footer />
       </>
     );
@@ -263,204 +188,164 @@ export default function AdminPage() {
   return (
     <>
       <Navbar />
-
-      <main style={{ paddingTop: '7rem' }}>
-        <section className="section">
-          <div className="container">
-            <div className="section-header" style={{ textAlign: 'left', marginBottom: '2rem' }}>
-              <h1 className="title" style={{ fontSize: '3rem' }}>Admin Panel</h1>
-              <p className="subtitle" style={{ margin: 0, maxWidth: '900px' }}>
-                Add new battery items, edit existing items, or delete old ones. Homepage items update from this panel on the same browser.
-              </p>
+      <main className="admin-shell">
+        <div className="container">
+          <div className="admin-page-header">
+            <div>
+              <h1 className="title" style={{ fontSize: '2.8rem' }}>Admin Panel</h1>
+              <p className="subtitle" style={{ margin: 0 }}>Manage products, orders, discounts, and customer roles.</p>
             </div>
+            <span className="badge status-success">Signed in as {currentUser.name}</span>
+          </div>
 
-            <div className="grid grid-cols-2" style={{ alignItems: 'start' }}>
-              <div className="card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
-                  <h2 style={{ fontSize: '1.75rem' }}>{editingId === null ? 'Add Item' : 'Edit Item'}</h2>
-                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end' }}>
-                    <span className="badge status-success">
-                      Contact: {DISPLAY_PHONE_NUMBER}
-                    </span>
-                    <button type="button" className="btn btn-outline btn-mobile-icon" onClick={handleLogout} aria-label="Logout" title="Logout">
-                      <LogOut size={16} />
-                      <span className="btn-text">Logout</span>
-                    </button>
+          <div className="admin-tabs">
+            {tabs.map((item) => (
+              <button key={item.id} className={`admin-tab ${tab === item.id ? 'active' : ''}`} onClick={() => setTab(item.id)}>
+                {item.icon}
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'dashboard' ? (
+            <section className="admin-grid">
+              <div className="theme-card admin-metric"><span>Products</span><strong>{items.length}</strong></div>
+              <div className="theme-card admin-metric"><span>Orders</span><strong>{orders.length}</strong></div>
+              <div className="theme-card admin-metric"><span>Users</span><strong>{users.length}</strong></div>
+              <div className="theme-card admin-metric"><span>Revenue</span><strong>Rs. {totalRevenue.toLocaleString('en-PK')}</strong></div>
+            </section>
+          ) : null}
+
+          {tab === 'products' ? (
+            <section className="admin-two-column">
+              <div className="theme-card">
+                <h2>{editingId === null ? 'Add Product' : 'Edit Product'}</h2>
+                <form onSubmit={handleSubmit} className="admin-form">
+                  <input className="form-input" placeholder="Product name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+                  <textarea className="form-input" placeholder="Description" rows={4} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
+                  <div className="admin-form-grid">
+                    <input className="form-input" placeholder="Brand" value={form.brand} onChange={(event) => setForm({ ...form, brand: event.target.value })} />
+                    <input className="form-input" placeholder="Category" value={form.subCategory} onChange={(event) => setForm({ ...form, subCategory: event.target.value })} />
+                    <input className="form-input" placeholder="Sale price, e.g. Rs. 12,999" value={form.defaultPrice} onChange={(event) => setForm({ ...form, defaultPrice: event.target.value })} />
+                    <input className="form-input" placeholder="Original price" value={form.originalPrice} onChange={(event) => setForm({ ...form, originalPrice: event.target.value })} />
                   </div>
-                </div>
-
-                <form onSubmit={(e) => handleSubmit(e)}>
-                  <div className="form-group">
-                    <label className="form-label">Item Name</label>
-                    <input className="form-input" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Samsung Galaxy S24 Ultra Battery" />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Description</label>
-                    <textarea
-                      className="form-input"
-                      value={form.description}
-                      onChange={(event) => setForm({ ...form, description: event.target.value })}
-                      placeholder="Write product details, quality notes, compatibility, warranty, or delivery information."
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2">
-                    <div className="form-group">
-                      <label className="form-label">Brand</label>
-                      <input className="form-input" value={form.brand} onChange={(event) => setForm({ ...form, brand: event.target.value })} placeholder="Samsung" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Sub Category</label>
-                      <input className="form-input" value={form.subCategory} onChange={(event) => setForm({ ...form, subCategory: event.target.value })} placeholder="S Series" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2">
-                    <div className="form-group">
-                      <label className="form-label">Default Price</label>
-                      <input className="form-input" value={form.defaultPrice} onChange={(event) => setForm({ ...form, defaultPrice: event.target.value })} placeholder="Rs. 12,999" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Original Price</label>
-                      <input className="form-input" value={form.originalPrice} onChange={(event) => setForm({ ...form, originalPrice: event.target.value })} placeholder="Rs. 14,999" />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Stock Status</label>
-                    <input type="checkbox" className="" checked={form.stock === "In Stock"} onChange={(event) => setForm({ ...form, stock: event.target.checked ? "In Stock" : "Out of Stock" })} />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Card Picture Sizing</label>
-                    <select
-                      className="form-input"
-                      value={form.imageFit}
-                      onChange={(event) => setForm({ ...form, imageFit: event.target.value as ItemForm["imageFit"] })}
-                    >
-                      <option value="fit">Fit full picture</option>
-                      <option value="fill">Fill card</option>
-                      <option value="zoom">Zoomed fill</option>
-                    </select>
-                    <p className="upload-help-text">Controls how this product picture appears in home and store cards.</p>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Product Picture</label>
-                    <label className="image-upload-box">
-                      <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-                      <ImagePlus size={20} />
-                      <span>{form.image ? 'Change product image' : 'Upload product image'}</span>
-                    </label>
-                    <p className="upload-help-text">Use JPG, PNG, or WebP. Max size: 1 MB.</p>
-
-                    {form.image ? (
-                      <div className="admin-image-preview-wrap">
-                        <Image src={form.image} alt="Preview" width={320} height={240} unoptimized className={`admin-image-preview product-card-image-${form.imageFit}`} />
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          onClick={() => setForm({ ...form, image: '' })}
-                        >
-                          <X size={16} />
-                          Remove Picture
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                    <button type="submit" className="btn btn-primary btn-mobile-icon" aria-label={editingId === null ? 'Add item' : 'Save changes'} title={editingId === null ? 'Add item' : 'Save changes'}>
-                      {editingId === null ? <Plus size={18} /> : <Save size={18} />}
-                      <span className="btn-text">{editingId === null ? 'Add Item' : 'Save Changes'}</span>
-                    </button>
-
-                    <button type="button" className="btn btn-outline" onClick={() => {
-                      setEditingId(null);
-                      setForm(EMPTY_FORM);
-                    }} aria-label="Clear form" title="Clear form">
-                      <X size={18} />
-                      <span className="btn-text">Clear Form</span>
-                    </button>
-
-                    <button type="button" className="btn btn-outline btn-mobile-icon" onClick={handleReset} aria-label="Reset default items" title="Reset default items">
-                      <RotateCcw size={18} />
-                      <span className="btn-text">Reset Default Items</span>
-                    </button>
+                  <label className="admin-check"><input type="checkbox" checked={form.stock === 'In Stock'} onChange={(event) => setForm({ ...form, stock: event.target.checked ? 'In Stock' : 'Out of Stock' })} /> In Stock</label>
+                  <select className="form-input" value={form.imageFit} onChange={(event) => setForm({ ...form, imageFit: event.target.value as ItemForm['imageFit'] })}>
+                    <option value="fit">Fit full picture</option>
+                    <option value="fill">Fill card</option>
+                    <option value="zoom">Zoomed fill</option>
+                  </select>
+                  <label className="image-upload-box">
+                    <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                    <ImagePlus size={20} />
+                    <span>{form.image ? 'Change product image' : 'Upload product image'}</span>
+                  </label>
+                  {form.image ? <Image src={form.image} alt="Preview" width={320} height={240} unoptimized className={`admin-image-preview product-card-image-${form.imageFit}`} /> : null}
+                  <div className="admin-action-row">
+                    <button className="btn btn-primary" type="submit">{editingId === null ? <Plus size={16} /> : <Save size={16} />}{editingId === null ? 'Add Product' : 'Save Product'}</button>
+                    <button className="btn btn-outline" type="button" onClick={() => { setEditingId(null); setForm(EMPTY_FORM); }}><X size={16} />Clear</button>
                   </div>
                 </form>
               </div>
 
-              <div className="card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
-                  <h2 style={{ fontSize: '1.75rem' }}>Current Items</h2>
-                  <a href={getWhatsAppLink(WHATSAPP_MESSAGES.adminSupport)} target="_blank" rel="noreferrer" className="btn btn-whatsapp btn-mobile-icon" aria-label="Support" title="Support">
-                    <Headphones size={18} />
-                    <span className="btn-text">Support</span>
-                  </a>
-                </div>
-
-                <div style={{ display: 'grid', gap: '1rem' }}>
-                  {loading ? (
-                    <p>Loading items...</p>
-                  ) : sortedItems.length === 0 ? (
-                    <p>No items found. Add some using the form on the left.</p>
-                  ) : 
-                  sortedItems.map((item) => (
-                    <div key={item.id} style={{ border: '1px solid var(--card-border)', borderRadius: '12px', padding: '1rem', background: 'var(--surface-soft)' }}>
-                      {item.image ? (
-                        <Image src={item.image} alt={item.name} width={640} height={360} unoptimized className={`admin-item-thumb product-card-image-${item.imageFit ?? 'fit'}`} />
-                      ) : (
-                        <div className="admin-item-thumb admin-item-thumb-fallback">
-                          <ImagePlus size={22} />
-                          <span>No picture</span>
-                        </div>
-                      )}
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.75rem' }}>
-                        <div>
-                          <h3 style={{ fontSize: '1.1rem', marginBottom: '0.35rem' }}>{item.name}</h3>
-                          <div>
-                            <span className={`badge ${item.brand === 'Samsung' ? 'badge-samsung' : item.brand === 'Apple' ? 'badge-apple' : ''}`}>{item.brand}</span>
-                            <span className="badge" style={{ background: 'var(--badge-bg)' }}>{item.subCategory}</span>
-                          </div>
-                        </div>
-                        <span className="card-tag" style={{ position: 'static', whiteSpace: 'nowrap' }}>{item.stock}</span>
+              <div className="theme-card">
+                <h2>Product List</h2>
+                <div className="admin-list">
+                  {loading ? <p>Loading products...</p> : sortedItems.map((item) => (
+                    <div className="admin-list-row" key={String(item._id || item.id)}>
+                      <div>
+                        <strong>{item.name}</strong>
+                        <span>{item.brand} / {item.subCategory} / {item.defaultPrice}</span>
                       </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center' }}>
-                        <strong className="price">{item.defaultPrice}</strong>
-                        <span className="price-strike">{item.originalPrice}</span>
-                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                          <Link href={`/items/${item._id}`} className="btn btn-outline btn-mobile-icon" title="View details">
-                            <span className="btn-text">View</span>
-                          </Link>
-                          <button type="button" className="btn btn-outline btn-mobile-icon" onClick={() => handleEdit(item)} aria-label={`Edit ${item.name}`} title="Edit">
-                            <Pencil size={16} />
-                            <span className="btn-text">Edit</span>
-                          </button>
-                          <button type="button" className="btn btn-mobile-icon" style={{ background: 'var(--danger-soft)', color: 'var(--danger)' }} onClick={() => {
-                            const id = item._id ? item._id.toString() : item.id;
-                            if (id) handleDelete(id);
-                          }} aria-label={`Delete ${item.name}`} title="Delete">
-                            <Trash2 size={16} />
-                            <span className="btn-text">Delete</span>
-                          </button>
-                        </div>
+                      <div className="admin-action-row">
+                        <button className="btn btn-outline btn-sm" onClick={() => handleEdit(item)}>Edit</button>
+                        <button className="btn btn-sm admin-danger" onClick={() => handleDelete(item)}><Trash2 size={14} />Delete</button>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-      </main>
+            </section>
+          ) : null}
 
+          {tab === 'orders' ? (
+            <section className="theme-card">
+              <h2>Orders</h2>
+              <div className="admin-list">
+                {orders.length === 0 ? <p>No orders yet. Stripe or COD checkout creates pending orders here.</p> : orders.map((order) => (
+                  <div className="admin-list-row" key={order.id}>
+                    <div>
+                      <strong>{order.customerName} - Rs. {order.total.toLocaleString('en-PK')}</strong>
+                      <span>{order.customerEmail} / {order.customerPhone || 'No phone'} / {order.paymentMethod.toUpperCase()} / {new Date(order.createdAt).toLocaleString()}</span>
+                      <span>Subtotal: Rs. {(order.subtotal || order.total).toLocaleString('en-PK')} / Promo: {order.discountCode ? `${order.discountCode} (-Rs. ${(order.discountAmount || 0).toLocaleString('en-PK')})` : 'None'}</span>
+                      <span>{order.deliveryAddress || 'No address'}{order.deliveryCity ? `, ${order.deliveryCity}` : ''}</span>
+                      <span>{order.items.map((item) => `${item.name} x${item.quantity}`).join(', ')}</span>
+                    </div>
+                    <select className="form-input admin-select" value={order.status} onChange={(event) => handleOrderStatus(order.id, event.target.value as StoreOrder['status'])}>
+                      {['Pending', 'Paid', 'Processing', 'Completed', 'Cancelled'].map((status) => <option key={status}>{status}</option>)}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {tab === 'discounts' ? (
+            <section className="admin-two-column">
+              <div className="theme-card">
+                <h2>Add Discount</h2>
+                <form className="admin-form" onSubmit={handleDiscountSubmit}>
+                  <input className="form-input" placeholder="Code, e.g. SUMMER10" value={discountForm.code} onChange={(event) => setDiscountForm({ ...discountForm, code: event.target.value })} />
+                  <select className="form-input" value={discountForm.type} onChange={(event) => setDiscountForm({ ...discountForm, type: event.target.value as StoreDiscount['type'] })}>
+                    <option value="percent">Percent</option>
+                    <option value="fixed">Fixed Rs.</option>
+                  </select>
+                  <input className="form-input" type="number" min={1} value={discountForm.value} onChange={(event) => setDiscountForm({ ...discountForm, value: Number(event.target.value) })} />
+                  <button className="btn btn-primary" type="submit"><Plus size={16} />Add Discount</button>
+                </form>
+              </div>
+              <div className="theme-card">
+                <h2>Discounts</h2>
+                <div className="admin-list">
+                  {discounts.length === 0 ? <p>No discounts created.</p> : discounts.map((discount) => (
+                    <div className="admin-list-row" key={discount.id}>
+                      <div>
+                        <strong>{discount.code}</strong>
+                        <span>{discount.type === 'percent' ? `${discount.value}%` : `Rs. ${discount.value}`} / {discount.active ? 'Active' : 'Disabled'}</span>
+                      </div>
+                      <div className="admin-action-row">
+                        <button className="btn btn-outline btn-sm" onClick={async () => setDiscounts(await updateDiscount(discount.id, { active: !discount.active }))}>{discount.active ? 'Disable' : 'Enable'}</button>
+                        <button className="btn btn-sm admin-danger" onClick={async () => setDiscounts(await deleteDiscount(discount.id))}>Remove</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          ) : null}
+
+          {tab === 'users' ? (
+            <section className="theme-card">
+              <h2>Users and Roles</h2>
+              <div className="admin-list">
+                {users.map((user) => (
+                  <div className="admin-list-row" key={user.id}>
+                    <div>
+                      <strong>{user.name}</strong>
+                      <span>{user.email} / {user.phone || 'No phone'} / Joined {new Date(user.createdAt).toLocaleDateString()}</span>
+                      <span>{user.address || 'No address'}{user.city ? `, ${user.city}` : ''}</span>
+                    </div>
+                    <select className="form-input admin-select" value={user.role} onChange={(event) => handleRoleChange(user.id, event.target.value as UserRole)} disabled={user.id === currentUser.id}>
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </div>
+      </main>
       <Footer />
     </>
   );

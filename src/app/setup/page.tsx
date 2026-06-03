@@ -22,6 +22,8 @@ export default function SetupPage() {
   const dispatch = useAppDispatch();
   const [status, setStatus] = useState('Initializing database...');
   const [products, setProducts] = useState<Product[]>([]);
+  const [collections, setCollections] = useState<string[]>([]);
+  const [createdCollections, setCreatedCollections] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -31,15 +33,17 @@ export default function SetupPage() {
         setLoading(true);
         setError('');
 
-        setStatus('Step 1: Initializing database with default items...');
-        const initResponse = await fetch('/api/init-db');
-        const initResult = await initResponse.json();
+        setStatus('Step 1: Creating ecommerce collections and indexes...');
+        const setupResponse = await fetch('/api/setup/ecommerce', { method: 'POST' });
+        const setupResult = await setupResponse.json();
 
-        if (!initResult.success) {
-          throw new Error(initResult.error || 'Failed to initialize database');
+        if (!setupResponse.ok) {
+          throw new Error(setupResult.error || 'Failed to setup ecommerce collections');
         }
 
-        setStatus(`Step 2: Database initialized! Found ${initResult.insertedCount || initResult.count} items`);
+        setCollections(setupResult.collections || []);
+        setCreatedCollections(setupResult.created || []);
+        setStatus(`Step 2: Ecommerce collections ready. Created ${setupResult.created?.length || 0} new collections.`);
 
         setStatus('Step 3: Fetching all items from database...');
         const itemsResponse = await fetch(API_ROUTES.items);
@@ -76,6 +80,18 @@ export default function SetupPage() {
         {error && (
           <div className="status-banner status-error">
             <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {collections.length > 0 && (
+          <div className="theme-card" style={{ marginBottom: '1.25rem' }}>
+            <h2 style={{ marginBottom: '0.75rem' }}>Ecommerce Collections</h2>
+            <p className="theme-muted" style={{ marginBottom: '0.75rem' }}>
+              Ready: {collections.join(', ')}
+            </p>
+            <p className="theme-muted">
+              Newly created: {createdCollections.length > 0 ? createdCollections.join(', ') : 'None, all already existed'}
+            </p>
           </div>
         )}
 

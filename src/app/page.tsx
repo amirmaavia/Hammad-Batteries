@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
-import { cartStore } from '../components/Navbar';
+import { cartStore } from '../lib/cart';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
 import {
