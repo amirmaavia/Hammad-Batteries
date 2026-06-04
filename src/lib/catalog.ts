@@ -12,6 +12,7 @@ export type CatalogItem = {
   originalPrice: string;
   stock: string;
   image?: string;
+  images?: string[];
   imageFit?: "fit" | "fill" | "zoom";
 };
 
@@ -26,6 +27,7 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     defaultPrice: "Rs. 14,999",
     stock: "In Stock",
     image: "",
+    images: [],
     imageFit: "fit",
   },
   {
@@ -38,9 +40,18 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     defaultPrice: "Rs. 10,500",
     stock: "In Stock",
     image: "",
+    images: [],
     imageFit: "fit",
   }
 ];
+
+export function getProductImages(item: Pick<CatalogItem, "image" | "images">): string[] {
+  return Array.from(new Set([...(item.images || []), item.image || ""].map((image) => image.trim()).filter(Boolean)));
+}
+
+export function getPrimaryProductImage(item: Pick<CatalogItem, "image" | "images">): string {
+  return getProductImages(item)[0] || "";
+}
 
 // Database-backed catalog functions
 export async function loadCatalogItems(): Promise<CatalogItem[]> {
@@ -89,7 +100,8 @@ export async function saveCatalogItems(items: CatalogItem): Promise<boolean> {
             defaultPrice: items.defaultPrice,
             originalPrice: items.originalPrice,
             stock: items.stock,
-            image: items.image || "",
+            image: getPrimaryProductImage(items),
+            images: getProductImages(items),
             imageFit: items.imageFit || "fit",
           }),
         });
@@ -110,7 +122,8 @@ export async function saveCatalogItems(items: CatalogItem): Promise<boolean> {
             defaultPrice: items.defaultPrice,
             originalPrice: items.originalPrice,
             stock: items.stock,
-            image: items.image || "",
+            image: getPrimaryProductImage(items),
+            images: getProductImages(items),
             imageFit: items.imageFit || "fit",
           }),
         });

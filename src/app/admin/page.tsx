@@ -23,6 +23,7 @@ type ItemForm = {
   originalPrice: string;
   stock: string;
   image: string;
+  images: string[];
   imageFit: NonNullable<CatalogItem['imageFit']>;
 };
 
@@ -35,6 +36,7 @@ const EMPTY_FORM: ItemForm = {
   originalPrice: '',
   stock: 'In Stock',
   image: '',
+  images: [],
   imageFit: 'fit',
 };
 
@@ -85,27 +87,52 @@ export default function AdminPage() {
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
 
-    if (!file.type.startsWith('image/')) {
+    if (files.some((file) => !file.type.startsWith('image/'))) {
       window.alert('Please choose an image file only.');
       event.target.value = '';
       return;
     }
 
-    if (file.size > 1024 * 1024) {
-      window.alert('Please use an image smaller than 1 MB.');
+    if (files.some((file) => file.size > 1024 * 1024)) {
+      window.alert('Please use images smaller than 1 MB each.');
       event.target.value = '';
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setForm((currentForm) => ({ ...currentForm, image: typeof reader.result === 'string' ? reader.result : '' }));
+    Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+            reader.readAsDataURL(file);
+          })
+      )
+    ).then((loadedImages) => {
+      const nextImages = loadedImages.filter(Boolean);
+      setForm((currentForm) => {
+        const images = Array.from(new Set([...currentForm.images, ...nextImages]));
+        return { ...currentForm, image: images[0] || '', images };
+      });
       event.target.value = '';
-    };
-    reader.readAsDataURL(file);
+    });
+  };
+
+  const setMainImage = (image: string) => {
+    setForm((currentForm) => {
+      const images = [image, ...currentForm.images.filter((currentImage) => currentImage !== image)];
+      return { ...currentForm, image, images };
+    });
+  };
+
+  const removeImage = (image: string) => {
+    setForm((currentForm) => {
+      const images = currentForm.images.filter((currentImage) => currentImage !== image);
+      return { ...currentForm, image: images[0] || '', images };
+    });
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -118,7 +145,8 @@ export default function AdminPage() {
       defaultPrice: form.defaultPrice.trim(),
       originalPrice: form.originalPrice.trim() || form.defaultPrice.trim(),
       stock: form.stock,
-      image: form.image,
+      image: form.images[0] || form.image,
+      images: form.images,
       imageFit: form.imageFit,
     };
 
@@ -139,7 +167,8 @@ export default function AdminPage() {
       defaultPrice: item.defaultPrice,
       originalPrice: item.originalPrice || item.defaultPrice,
       stock: item.stock,
-      image: item.image || '',
+      image: item.images?.[0] || item.image || '',
+      images: item.images?.length ? item.images : item.image ? [item.image] : [],
       imageFit: item.imageFit || 'fit',
     });
     setEditingId(String(item._id || item.id));
@@ -236,11 +265,27 @@ export default function AdminPage() {
                     <option value="zoom">Zoomed fill</option>
                   </select>
                   <label className="image-upload-box">
-                    <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                    <input type="file" accept="image/*" multiple onChange={handleImageChange} style={{ display: 'none' }} />
                     <ImagePlus size={20} />
-                    <span>{form.image ? 'Change product image' : 'Upload product image'}</span>
+                    <span>{form.images.length ? 'Add more product images' : 'Upload product images'}</span>
                   </label>
-                  {form.image ? <Image src={form.image} alt="Preview" width={320} height={240} unoptimized className={`admin-image-preview product-card-image-${form.imageFit}`} /> : null}
+                  {form.images.length ? (
+                    <div className="admin-image-gallery">
+                      {form.images.map((image, index) => (
+                        <div className="admin-image-tile" key={image}>
+                          <Image src={image} alt={`Preview ${index + 1}`} width={320} height={240} unoptimized className={`admin-image-preview product-card-image-${form.imageFit}`} />
+                          <div className="admin-image-tile-actions">
+                            <button className={`btn btn-sm ${index === 0 ? 'btn-success' : 'btn-outline'}`} type="button" onClick={() => setMainImage(image)}>
+                              {index === 0 ? 'Main' : 'Set Main'}
+                            </button>
+                            <button className="btn btn-sm admin-danger" type="button" onClick={() => removeImage(image)} aria-label="Remove image">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                   <div className="admin-action-row">
                     <button className="btn btn-primary" type="submit">{editingId === null ? <Plus size={16} /> : <Save size={16} />}{editingId === null ? 'Add Product' : 'Save Product'}</button>
                     <button className="btn btn-outline" type="button" onClick={() => { setEditingId(null); setForm(EMPTY_FORM); }}><X size={16} />Clear</button>

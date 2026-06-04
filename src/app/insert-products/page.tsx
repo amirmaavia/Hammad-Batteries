@@ -27,6 +27,8 @@ export default function InsertProductsPage() {
         originalPrice: "Rs. 16,999",
         stock: "In Stock",
         image: "",
+        images: [],
+        imageFit: "fit" as const,
       },
     ];
 

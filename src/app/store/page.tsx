@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Filter, ImageOff, SlidersHorizontal, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { CatalogItem } from '../../lib/catalog';
+import { CatalogItem, getPrimaryProductImage } from '../../lib/catalog';
 import { cartStore } from '../../lib/cart';
 import ProductCard from '../../components/ProductCard';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -71,7 +71,7 @@ function StoreContent() {
       name: item.name,
       brand: item.brand,
       defaultPrice: item.defaultPrice,
-      image: item.image,
+      image: getPrimaryProductImage(item),
     });
     setAddedId(String(item._id || item.id));
     setTimeout(() => setAddedId(null), 1500);

@@ -10,7 +10,7 @@ import {
   ArrowRight, MessageCircle, Zap,
   Shield, Truck, BadgeDollarSign, Lock, Star, ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { CatalogItem } from '../lib/catalog';
+import { CatalogItem, getPrimaryProductImage } from '../lib/catalog';
 import { getWhatsAppLink, WHATSAPP_MESSAGES } from '../lib/site';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchItems } from '@/store/itemsSlice';
@@ -179,7 +179,7 @@ export default function Home() {
       name: item.name,
       brand: item.brand,
       defaultPrice: item.defaultPrice,
-      image: item.image,
+      image: getPrimaryProductImage(item),
     });
     setAddedId(String(item._id || item.id));
     setTimeout(() => setAddedId(null), 1500);

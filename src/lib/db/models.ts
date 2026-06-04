@@ -10,6 +10,7 @@ export interface CatalogItemSchema {
   defaultPrice: string;
   stock: string;
   image?: string;
+  images?: string[];
   imageFit?: "fit" | "fill" | "zoom";
   createdAt?: Date;
   updatedAt?: Date;
@@ -28,6 +29,11 @@ export const catalogItemSchema = {
     defaultPrice: { bsonType: "string", description: "Default price in Rs." },
     stock: { bsonType: "string", description: "Stock status" },
     image: { bsonType: "string", description: "Image URL" },
+    images: {
+      bsonType: "array",
+      description: "Product gallery image URLs",
+      items: { bsonType: "string" },
+    },
     imageFit: { bsonType: "string", description: "Product card image sizing" },
     createdAt: { bsonType: "date", description: "Creation timestamp" },
     updatedAt: { bsonType: "date", description: "Last update timestamp" },

@@ -5,16 +5,61 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
-import { ArrowLeft, BadgeInfo, ImageOff, PackageCheck, ShoppingCart, Smartphone, Tag } from 'lucide-react';
-import { CatalogItem } from '../../../lib/catalog';
+import { ArrowLeft, BadgeInfo, ChevronLeft, ChevronRight, ImageOff, PackageCheck, ShoppingCart, Smartphone, Tag } from 'lucide-react';
+import { CatalogItem, getPrimaryProductImage, getProductImages } from '../../../lib/catalog';
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchItemById } from '@/store/itemsSlice';
 import { cartStore } from '@/lib/cart';
 
 function ItemImage({ item }: { item: CatalogItem }) {
-  if (item.image) {
-    return <Image src={item.image} alt={item.name} width={800} height={800} unoptimized className={`product-detail-image product-card-image-${item.imageFit ?? 'fit'}`} />;
+  const images = getProductImages(item);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeImage = images[activeIndex] || '';
+
+  const showPrevious = () => setActiveIndex((currentIndex) => (currentIndex - 1 + images.length) % images.length);
+  const showNext = () => setActiveIndex((currentIndex) => (currentIndex + 1) % images.length);
+
+  if (activeImage) {
+    return (
+      <div className="product-detail-gallery">
+        <div className="product-detail-image-wrap">
+          <Image
+            src={activeImage}
+            alt={item.name}
+            width={900}
+            height={900}
+            unoptimized
+            className={`product-detail-image product-card-image-${item.imageFit ?? 'fit'}`}
+          />
+          {images.length > 1 ? (
+            <>
+              <button className="gallery-arrow gallery-arrow-left" type="button" onClick={showPrevious} aria-label="Previous product image">
+                <ChevronLeft size={20} />
+              </button>
+              <button className="gallery-arrow gallery-arrow-right" type="button" onClick={showNext} aria-label="Next product image">
+                <ChevronRight size={20} />
+              </button>
+            </>
+          ) : null}
+        </div>
+        {images.length > 1 ? (
+          <div className="product-detail-thumbs">
+            {images.map((image, index) => (
+              <button
+                className={`product-detail-thumb${index === activeIndex ? ' active' : ''}`}
+                key={image}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                aria-label={`Show product image ${index + 1}`}
+              >
+                <Image src={image} alt={`${item.name} ${index + 1}`} width={120} height={120} unoptimized className={`product-detail-thumb-image product-card-image-${item.imageFit ?? 'fit'}`} />
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
   }
 
   return (
@@ -46,7 +91,7 @@ export default function ItemDetailPage() {
       name: item.name,
       brand: item.brand,
       defaultPrice: item.defaultPrice,
-      image: item.image,
+      image: getPrimaryProductImage(item),
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);

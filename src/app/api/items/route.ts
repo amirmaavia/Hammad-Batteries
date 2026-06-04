@@ -2,6 +2,9 @@ import { loadCatalogItemsById } from "@/lib/catalog";
 import { getAllItems, createItem } from "@/lib/db/crud";
 import { NextResponse } from "next/server";
 
+const productImages = (image?: string, images?: string[]) =>
+  Array.from(new Set([...(Array.isArray(images) ? images : []), image || ""].map((value) => value.trim()).filter(Boolean)));
+
 export async function GET() {
   try {
     const items = await getAllItems();
@@ -58,7 +61,9 @@ export async function GETBYID(req: Request, { params }: { params: { id: string }
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, brand, subCategory, description, defaultPrice, originalPrice, stock, image, imageFit } = body;
+    const { name, brand, subCategory, description, defaultPrice, originalPrice, stock, image, images, imageFit } = body;
+    const galleryImages = productImages(image, images);
+    const primaryImage = galleryImages[0] || "";
 
     if (!name || !brand || !subCategory || !defaultPrice || !originalPrice || !stock) {
       return NextResponse.json(
@@ -78,14 +83,15 @@ export async function POST(req: Request) {
       originalPrice,
       defaultPrice,
       stock,
-      image: image || "",
+      image: primaryImage,
+      images: galleryImages,
       imageFit: imageFit || "fit",
     });
 
     return NextResponse.json(
       {
         success: true,
-        data: { _id: id, name, brand, subCategory, description: description || "", defaultPrice, originalPrice, stock, image, imageFit: imageFit || "fit" },
+        data: { _id: id, name, brand, subCategory, description: description || "", defaultPrice, originalPrice, stock, image: primaryImage, images: galleryImages, imageFit: imageFit || "fit" },
       },
       { status: 201 }
     );

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ImageOff, ShoppingCart } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { useState } from 'react';
-import { CatalogItem } from '../lib/catalog';
+import { CatalogItem, getPrimaryProductImage } from '../lib/catalog';
 import { cartStore } from '../lib/cart';
 
 type ProductCardProps = {
@@ -29,6 +29,7 @@ export default function ProductCard({
   const id = String(item._id || item.id);
   const detailHref = `/items/${id}`;
   const [localAdded, setLocalAdded] = useState(false);
+  const primaryImage = getPrimaryProductImage(item);
 
   const openDetail = () => {
     router.push(detailHref);
@@ -45,7 +46,7 @@ export default function ProductCard({
         name: item.name,
         brand: item.brand,
         defaultPrice: item.defaultPrice,
-        image: item.image,
+        image: primaryImage,
       });
       setLocalAdded(true);
       setTimeout(() => setLocalAdded(false), 1500);
@@ -70,9 +71,9 @@ export default function ProductCard({
       {isNew ? <div className="new-arrival-ribbon">New</div> : null}
       <div className="card-tag">{item.stock}</div>
 
-      {item.image ? (
+      {primaryImage ? (
         <Image
-          src={item.image}
+          src={primaryImage}
           alt={item.name}
           width={640}
           height={480}

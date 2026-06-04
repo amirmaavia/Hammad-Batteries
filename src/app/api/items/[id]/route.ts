@@ -1,6 +1,9 @@
 import { updateItem, deleteItem, getItemById } from "@/lib/db/crud";
 import { NextRequest, NextResponse } from "next/server";
 
+const productImages = (image?: string, images?: string[]) =>
+  Array.from(new Set([...(Array.isArray(images) ? images : []), image || ""].map((value) => value.trim()).filter(Boolean)));
+
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   try {
@@ -18,7 +21,13 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       );
     }
 
-    const updated = await updateItem(id, body);
+    const hasImageUpdate = "image" in body || "images" in body;
+    const galleryImages = hasImageUpdate ? productImages(body.image, body.images) : [];
+    const updated = await updateItem(id, hasImageUpdate ? {
+      ...body,
+      image: galleryImages[0] || "",
+      images: galleryImages,
+    } : body);
 
     if (!updated) {
       return NextResponse.json(

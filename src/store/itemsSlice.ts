@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { CatalogItem, DEFAULT_ITEMS } from "@/lib/catalog";
+import { CatalogItem, DEFAULT_ITEMS, getPrimaryProductImage, getProductImages } from "@/lib/catalog";
 import { API_ROUTES } from "@/lib/api-routes";
 
 type ItemsState = {
@@ -26,7 +26,8 @@ const itemPayload = (item: CatalogItem) => ({
   defaultPrice: item.defaultPrice,
   originalPrice: item.originalPrice,
   stock: item.stock,
-  image: item.image || "",
+  image: getPrimaryProductImage(item),
+  images: getProductImages(item),
   imageFit: item.imageFit || "fit",
 });
 
