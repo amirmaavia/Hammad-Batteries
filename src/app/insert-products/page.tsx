@@ -28,6 +28,7 @@ export default function InsertProductsPage() {
         stock: "In Stock",
         image: "",
         images: [],
+        featured: false,
         imageFit: "fit" as const,
       },
     ];

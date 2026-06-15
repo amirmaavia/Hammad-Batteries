@@ -1,3 +1,5 @@
+import { getCurrentUser } from "./ecommerce";
+
 export type CartItem = {
   _id: string;
   name: string;
@@ -9,6 +11,12 @@ export type CartItem = {
 
 const CART_KEY = "hb_cart";
 
+function redirectToLogin() {
+  if (typeof window === "undefined") return;
+  const next = `${window.location.pathname}${window.location.search}`;
+  window.location.href = `/login?next=${encodeURIComponent(next || "/store")}`;
+}
+
 export const cartStore = {
   getItems(): CartItem[] {
     if (typeof window === "undefined") return [];
@@ -19,6 +27,11 @@ export const cartStore = {
     }
   },
   addItem(item: Omit<CartItem, "quantity">) {
+    if (!getCurrentUser()) {
+      redirectToLogin();
+      return false;
+    }
+
     const items = this.getItems();
     const existing = items.find((currentItem) => currentItem._id === item._id);
 
@@ -30,9 +43,18 @@ export const cartStore = {
 
     localStorage.setItem(CART_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("cart-update"));
+    return true;
   },
   removeItem(id: string) {
     const items = this.getItems().filter((item) => item._id !== id);
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    window.dispatchEvent(new Event("cart-update"));
+  },
+  updateQuantity(id: string, quantity: number) {
+    const nextQuantity = Math.max(1, Math.floor(quantity) || 1);
+    const items = this.getItems().map((item) => (
+      item._id === id ? { ...item, quantity: nextQuantity } : item
+    ));
     localStorage.setItem(CART_KEY, JSON.stringify(items));
     window.dispatchEvent(new Event("cart-update"));
   },

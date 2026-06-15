@@ -7,6 +7,7 @@ import type { MouseEvent } from 'react';
 import { useState } from 'react';
 import { CatalogItem, getPrimaryProductImage } from '../lib/catalog';
 import { cartStore } from '../lib/cart';
+import ProductVideoPopup from './ProductVideoPopup';
 
 type ProductCardProps = {
   item: CatalogItem;
@@ -41,19 +42,21 @@ export default function ProductCard({
     if (onAddToCart) {
       onAddToCart(event, item);
     } else {
-      cartStore.addItem({
+      const addedToCart = cartStore.addItem({
         _id: id,
         name: item.name,
         brand: item.brand,
         defaultPrice: item.defaultPrice,
         image: primaryImage,
       });
+      if (!addedToCart) return;
       setLocalAdded(true);
       setTimeout(() => setLocalAdded(false), 1500);
     }
   };
 
   const added = isAdded || localAdded;
+  const ribbonText = isNew ? 'New' : item.featured ? 'Featured' : '';
 
   return (
     <div
@@ -68,7 +71,7 @@ export default function ProductCard({
         }
       }}
     >
-      {isNew ? <div className="new-arrival-ribbon">New</div> : null}
+      {ribbonText ? <div className="new-arrival-ribbon">{ribbonText}</div> : null}
       <div className="card-tag">{item.stock}</div>
 
       {primaryImage ? (
@@ -76,7 +79,7 @@ export default function ProductCard({
           src={primaryImage}
           alt={item.name}
           width={640}
-          height={480}
+          height={640}
           unoptimized
           className={`product-card-image product-card-image-${item.imageFit ?? 'fit'}`}
         />
@@ -86,6 +89,8 @@ export default function ProductCard({
           <span>No image</span>
         </div>
       )}
+
+      <ProductVideoPopup video={item.video} videoId={item.videoId} productName={item.name} />
 
       <div>
         <span className={`badge ${item.brand === 'Samsung' ? 'badge-samsung' : item.brand === 'Apple' ? 'badge-apple' : ''}`}>

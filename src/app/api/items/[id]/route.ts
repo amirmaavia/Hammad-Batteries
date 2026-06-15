@@ -1,4 +1,5 @@
 import { updateItem, deleteItem, getItemById } from "@/lib/db/crud";
+import { createProductVideo, deleteProductVideo } from "@/lib/db/videos";
 import { NextRequest, NextResponse } from "next/server";
 
 const productImages = (image?: string, images?: string[]) =>
@@ -23,11 +24,23 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
     const hasImageUpdate = "image" in body || "images" in body;
     const galleryImages = hasImageUpdate ? productImages(body.image, body.images) : [];
-    const updated = await updateItem(id, hasImageUpdate ? {
+    const nextVideoId = body.video
+      ? await createProductVideo({
+          productId: id,
+          productName: body.name || item.name,
+          data: body.video,
+        })
+      : body.videoId;
+    const updates = {
       ...body,
+      ...(nextVideoId !== undefined ? { videoId: nextVideoId } : {}),
+      ...("video" in body ? { video: "" } : {}),
+    };
+    const updated = await updateItem(id, hasImageUpdate ? {
+      ...updates,
       image: galleryImages[0] || "",
       images: galleryImages,
-    } : body);
+    } : updates);
 
     if (!updated) {
       return NextResponse.json(
@@ -62,6 +75,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
+    const item = await getItemById(id);
 
     const deleted = await deleteItem(id);
 
@@ -74,6 +88,9 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
         { status: 404 }
       );
     }
+      if (item?.videoId) {
+        await deleteProductVideo(item.videoId);
+      }
       return NextResponse.json({ success: true });
 
   } catch (error) {

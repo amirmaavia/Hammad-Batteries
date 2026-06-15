@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { updateOrderStatus } from "@/lib/db/orders";
 import type { StoreOrder } from "@/lib/ecommerce";
+import { sendOrderShippedEmail } from "@/lib/email";
 
-const statuses: StoreOrder["status"][] = ["Pending", "Paid", "Processing", "Completed", "Cancelled"];
+const statuses: StoreOrder["status"][] = ["Pending", "Processing", "Shipped", "Completed", "Cancelled"];
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -14,6 +15,15 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     }
 
     const order = await updateOrderStatus(id, body.status);
+
+    if (body.status === "Shipped") {
+      try {
+        await sendOrderShippedEmail(order);
+      } catch (emailError) {
+        console.error("Unable to send shipping email:", emailError);
+      }
+    }
+
     return NextResponse.json({ order });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to update order.";

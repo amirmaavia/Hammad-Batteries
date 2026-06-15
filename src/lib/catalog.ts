@@ -13,6 +13,9 @@ export type CatalogItem = {
   stock: string;
   image?: string;
   images?: string[];
+  video?: string;
+  videoId?: string;
+  featured?: boolean;
   imageFit?: "fit" | "fill" | "zoom";
 };
 
@@ -28,6 +31,9 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     stock: "In Stock",
     image: "",
     images: [],
+    video: "",
+    videoId: "",
+    featured: false,
     imageFit: "fit",
   },
   {
@@ -41,6 +47,9 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     stock: "In Stock",
     image: "",
     images: [],
+    video: "",
+    videoId: "",
+    featured: false,
     imageFit: "fit",
   }
 ];
@@ -102,6 +111,9 @@ export async function saveCatalogItems(items: CatalogItem): Promise<boolean> {
             stock: items.stock,
             image: getPrimaryProductImage(items),
             images: getProductImages(items),
+            video: items.video || "",
+            videoId: items.videoId || "",
+            featured: Boolean(items.featured),
             imageFit: items.imageFit || "fit",
           }),
         });
@@ -124,6 +136,9 @@ export async function saveCatalogItems(items: CatalogItem): Promise<boolean> {
             stock: items.stock,
             image: getPrimaryProductImage(items),
             images: getProductImages(items),
+            video: items.video || "",
+            videoId: items.videoId || "",
+            featured: Boolean(items.featured),
             imageFit: items.imageFit || "fit",
           }),
         });

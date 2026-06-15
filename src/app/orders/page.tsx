@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { PackageCheck, ShoppingBag } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { getCurrentUser, getOrders, type StoreOrder, type StoreUser } from '@/lib/ecommerce';
+import PaymentStatusPanel from '@/components/PaymentStatusPanel';
+import { getCurrentUser, getOrders, restoreCurrentUserFromCookie, type StoreOrder, type StoreUser } from '@/lib/ecommerce';
 
 export default function OrdersPage() {
   const [currentUser, setCurrentUser] = useState<StoreUser | null>(null);
@@ -13,7 +14,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     const refreshOrders = async () => {
-      const user = getCurrentUser();
+      const user = getCurrentUser() || await restoreCurrentUserFromCookie();
       setCurrentUser(user);
       setOrders(user ? await getOrders(user.id) : []);
     };
@@ -55,18 +56,37 @@ export default function OrdersPage() {
           <div className="orders-list">
             {userOrders.map((order) => (
               <article className="theme-card order-card" key={order.id}>
+                <PaymentStatusPanel order={order} />
                 <div className="order-card-head">
                   <div>
                     <strong>Order {order.id.slice(-8).toUpperCase()}</strong>
                     <span>{new Date(order.createdAt).toLocaleString()}</span>
                   </div>
-                  <span className={`order-status order-status-${order.status.toLowerCase()}`}>{order.status}</span>
+                  <div className="order-tag-row">
+                    <span className={`order-status order-status-${order.status.toLowerCase()}`}>{order.status}</span>
+                  </div>
                 </div>
+                <div className="status-banner status-success">
+                  Your order is confirmed. We received your order and will contact you before delivery.
+                </div>
+                {order.status === 'Shipped' ? (
+                  <div className="status-banner status-info">
+                    Your order has shipped{order.shippedAt ? ` on ${new Date(order.shippedAt).toLocaleString()}` : ''}.
+                  </div>
+                ) : null}
 
                 <div className="order-meta-grid">
                   <div>
                     <span>Payment</span>
-                    <strong>{order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Stripe'}</strong>
+                    <strong>{order.paymentStatus}</strong>
+                  </div>
+                  <div>
+                    <span>Subtotal</span>
+                    <strong>Rs. {(order.subtotal || 0).toLocaleString('en-PK')}</strong>
+                  </div>
+                  <div>
+                    <span>Delivery Charge</span>
+                    <strong>Rs. {(order.deliveryCharge || 0).toLocaleString('en-PK')}</strong>
                   </div>
                   <div>
                     <span>Total</span>
@@ -83,6 +103,10 @@ export default function OrdersPage() {
                   <div>
                     <span>Delivery</span>
                     <strong>{order.deliveryAddress}, {order.deliveryCity}</strong>
+                  </div>
+                  <div>
+                    <span>Shipping</span>
+                    <strong>{order.shippedAt ? new Date(order.shippedAt).toLocaleString() : order.status === 'Shipped' ? 'Shipped' : 'Not shipped yet'}</strong>
                   </div>
                 </div>
 

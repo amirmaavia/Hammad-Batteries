@@ -28,6 +28,9 @@ const itemPayload = (item: CatalogItem) => ({
   stock: item.stock,
   image: getPrimaryProductImage(item),
   images: getProductImages(item),
+  video: item.video || "",
+  videoId: item.videoId || "",
+  featured: Boolean(item.featured),
   imageFit: item.imageFit || "fit",
 });
 

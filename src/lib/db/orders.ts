@@ -1,14 +1,27 @@
 import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
-import type { StoreOrder } from "@/lib/ecommerce";
+import { STANDARD_DELIVERY_CHARGE, type StoreOrder } from "@/lib/ecommerce";
 
-type OrderDocument = Omit<StoreOrder, "id" | "createdAt"> & {
+type OrderDocument = Omit<StoreOrder, "id" | "createdAt" | "shippedAt" | "paymentStatus" | "status"> & {
   _id?: ObjectId;
+  paymentStatus?: StoreOrder["paymentStatus"];
+  status: StoreOrder["status"] | "Paid";
   createdAt: Date;
   updatedAt: Date;
+  shippedAt?: Date;
 };
 
 const COLLECTION_NAME = "orders";
+
+function normalizeStatus(status: StoreOrder["status"] | "Paid"): StoreOrder["status"] {
+  return status === "Paid" ? "Pending" : status;
+}
+
+function defaultPaymentStatus(order: OrderDocument): StoreOrder["paymentStatus"] {
+  if (order.paymentStatus) return order.paymentStatus;
+  if (order.paymentMethod === "cod") return "COD";
+  return order.status === "Paid" ? "Online Paid" : "Online Pending";
+}
 
 function toStoreOrder(order: OrderDocument): StoreOrder {
   return {
@@ -23,10 +36,14 @@ function toStoreOrder(order: OrderDocument): StoreOrder {
     subtotal: order.subtotal,
     discountCode: order.discountCode,
     discountAmount: order.discountAmount,
+    deliveryCharge: order.deliveryCharge ?? STANDARD_DELIVERY_CHARGE,
     total: order.total,
     paymentMethod: order.paymentMethod,
-    status: order.status,
+    paymentStatus: defaultPaymentStatus(order),
+    stripePaymentId: order.stripePaymentId,
+    status: normalizeStatus(order.status),
     createdAt: order.createdAt.toISOString(),
+    shippedAt: order.shippedAt?.toISOString(),
   };
 }
 
@@ -47,7 +64,7 @@ export async function getOrdersByUser(userId: string) {
   return orders.map(toStoreOrder);
 }
 
-export async function createOrder(order: Omit<StoreOrder, "id" | "createdAt">) {
+export async function createOrder(order: Omit<StoreOrder, "id" | "createdAt" | "shippedAt">) {
   const collection = await getCollection();
   const now = new Date();
   const document: OrderDocument = {
@@ -61,9 +78,36 @@ export async function createOrder(order: Omit<StoreOrder, "id" | "createdAt">) {
 
 export async function updateOrderStatus(id: string, status: StoreOrder["status"]) {
   const collection = await getCollection();
+  const updates: Partial<OrderDocument> = { status, updatedAt: new Date() };
+
+  if (status === "Shipped") {
+    updates.shippedAt = new Date();
+  }
+
   await collection.updateOne(
     { _id: new ObjectId(id) },
-    { $set: { status, updatedAt: new Date() } }
+    { $set: updates }
+  );
+  const order = await collection.findOne({ _id: new ObjectId(id) });
+
+  if (!order) {
+    throw new Error("Order not found.");
+  }
+
+  return toStoreOrder(order);
+}
+
+export async function updateOrderPaymentStatus(id: string, paymentStatus: StoreOrder["paymentStatus"], stripePaymentId?: string) {
+  const collection = await getCollection();
+  const updates: Partial<OrderDocument> = { paymentStatus, updatedAt: new Date() };
+
+  if (stripePaymentId) {
+    updates.stripePaymentId = stripePaymentId;
+  }
+
+  await collection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: updates }
   );
   const order = await collection.findOne({ _id: new ObjectId(id) });
 

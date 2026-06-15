@@ -26,8 +26,8 @@ const SERVICES = [
   },
   {
     icon: <Truck size={32} color="#60a5fa" />,
-    title: 'Free Delivery',
-    desc: 'Free home delivery on all orders above Rs. 10,000 across Pakistan.',
+    title: 'Standard Delivery',
+    desc: 'Reliable home delivery across Pakistan with a standard Rs. 300 delivery charge.',
     color: '#60a5fa',
     bg: 'rgba(96, 165, 250, 0.12)',
   },
@@ -145,6 +145,7 @@ export default function Home() {
 
   // New Arrivals = latest 4 items
   const newArrivals = models.slice(0, 4);
+  const featuredProducts = useMemo(() => models.filter((item) => item.featured).slice(0, 4), [models]);
 
   const groupedCategories = useMemo(() => (
     models.reduce<Record<string, string[]>>((acc, m) => {
@@ -174,13 +175,14 @@ export default function Home() {
 
   const handleAddToCart = (e: React.MouseEvent, item: CatalogItem) => {
     e.stopPropagation();
-    cartStore.addItem({
+    const addedToCart = cartStore.addItem({
       _id: String(item._id || item.id),
       name: item.name,
       brand: item.brand,
       defaultPrice: item.defaultPrice,
       image: getPrimaryProductImage(item),
     });
+    if (!addedToCart) return;
     setAddedId(String(item._id || item.id));
     setTimeout(() => setAddedId(null), 1500);
   };
@@ -250,6 +252,40 @@ export default function Home() {
 
         {/* ── CATEGORIES (old) ── */}
         {/* ── NEW ARRIVALS (last 4 by date) ── */}
+        {featuredProducts.length > 0 ? (
+          <section id="featured-products" className="section new-arrivals-section">
+            <div className="container">
+              <div className="section-header">
+                <div className="new-arrivals-badge">
+                  <Star size={16} fill="#fbbf24" color="#fbbf24" /> Featured
+                </div>
+                <h2 className="title" style={{ fontSize: '2.5rem' }}>Featured <span className="text-gradient">Products</span></h2>
+                <p className="subtitle">Admin-selected batteries highlighted for quick shopping.</p>
+              </div>
+              <div className="grid grid-cols-4">
+                {featuredProducts.map(item => {
+                  const id = String(item._id || item.id);
+                  const isAdded = addedId === id;
+                  return (
+                    <ProductCard
+                      key={id}
+                      item={item}
+                      isAdded={isAdded}
+                      animationDuration="0.45s"
+                      onAddToCart={handleAddToCart}
+                    />
+                  );
+                })}
+              </div>
+              <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
+                <Link href="/store" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>
+                  Shop All Products <ArrowRight size={18} />
+                </Link>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <section id="new-arrivals" className="section new-arrivals-section">
           <div className="container">
             <div className="section-header">

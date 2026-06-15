@@ -2,13 +2,14 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Boxes, ImagePlus, LayoutDashboard, Percent, Plus, Save, Shield, ShoppingBag, Trash2, UsersRound, X } from 'lucide-react';
+import { Boxes, ImagePlus, LayoutDashboard, Percent, Plus, Save, Search, Shield, ShoppingBag, Trash2, UsersRound, Video, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import PaymentStatusPanel from '@/components/PaymentStatusPanel';
 import type { CatalogItem } from '@/lib/catalog';
-import { deleteDiscount, getCurrentUser, getDiscounts, getOrders, getUsers, saveDiscount, updateDiscount, updateOrderStatus, updateUserRole, type StoreDiscount, type StoreOrder, type StoreUser, type UserRole } from '@/lib/ecommerce';
+import { deleteDiscount, getCurrentUser, getDiscounts, getOrders, getUsers, restoreCurrentUserFromCookie, saveDiscount, updateDiscount, updateOrderStatus, updateUserRole, type StoreDiscount, type StoreOrder, type StoreUser, type UserRole } from '@/lib/ecommerce';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { deleteItemById, fetchItems, saveItem } from '@/store/itemsSlice';
 
@@ -24,6 +25,9 @@ type ItemForm = {
   stock: string;
   image: string;
   images: string[];
+  video: string;
+  videoId: string;
+  featured: boolean;
   imageFit: NonNullable<CatalogItem['imageFit']>;
 };
 
@@ -37,6 +41,9 @@ const EMPTY_FORM: ItemForm = {
   stock: 'In Stock',
   image: '',
   images: [],
+  video: '',
+  videoId: '',
+  featured: false,
   imageFit: 'fit',
 };
 
@@ -59,10 +66,11 @@ export default function AdminPage() {
   const [users, setUsers] = useState<StoreUser[]>([]);
   const [discounts, setDiscounts] = useState<StoreDiscount[]>([]);
   const [discountForm, setDiscountForm] = useState({ code: '', type: 'percent' as StoreDiscount['type'], value: 10 });
+  const [adminSearch, setAdminSearch] = useState('');
 
   useEffect(() => {
     const refreshAdminData = async () => {
-      setCurrentUser(getCurrentUser());
+      setCurrentUser(getCurrentUser() || await restoreCurrentUserFromCookie());
       setUsers(await getUsers());
       setOrders(await getOrders());
       setDiscounts(await getDiscounts());
@@ -82,6 +90,62 @@ export default function AdminPage() {
   const sortedItems = useMemo(
     () => [...items].sort((a, b) => String(b._id || b.id || '').localeCompare(String(a._id || a.id || ''))),
     [items]
+  );
+  const searchText = adminSearch.trim().toLowerCase();
+  const matchesSearch = useCallback((...values: Array<string | number | boolean | undefined | null>) => {
+    if (!searchText) return true;
+    return values.some((value) => String(value ?? '').toLowerCase().includes(searchText));
+  }, [searchText]);
+  const filteredItems = useMemo(
+    () => sortedItems.filter((item) => matchesSearch(
+      item.name,
+      item.brand,
+      item.subCategory,
+      item.description,
+      item.defaultPrice,
+      item.originalPrice,
+      item.stock,
+      item.featured ? 'featured' : ''
+    )),
+    [matchesSearch, sortedItems]
+  );
+  const filteredOrders = useMemo(
+    () => orders.filter((order) => matchesSearch(
+      order.id,
+      order.id.slice(-8).toUpperCase(),
+      order.customerName,
+      order.customerEmail,
+      order.customerPhone,
+      order.deliveryAddress,
+      order.deliveryCity,
+      order.paymentMethod,
+      order.status,
+      order.discountCode,
+      order.total,
+      order.items.map((item) => item.name).join(' ')
+    )),
+    [matchesSearch, orders]
+  );
+  const filteredDiscounts = useMemo(
+    () => discounts.filter((discount) => matchesSearch(
+      discount.code,
+      discount.type,
+      discount.value,
+      discount.active ? 'active enabled' : 'disabled inactive'
+    )),
+    [discounts, matchesSearch]
+  );
+  const filteredUsers = useMemo(
+    () => users.filter((user) => matchesSearch(
+      user.name,
+      user.email,
+      user.phone,
+      user.address,
+      user.city,
+      user.role,
+      user.createdAt
+    )),
+    [matchesSearch, users]
   );
 
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
@@ -135,6 +199,30 @@ export default function AdminPage() {
     });
   };
 
+  const handleVideoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('video/')) {
+      window.alert('Please choose a video file only.');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      window.alert('Please use a video smaller than 8 MB.');
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((currentForm) => ({ ...currentForm, video: typeof reader.result === 'string' ? reader.result : '', videoId: '' }));
+      event.target.value = '';
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const cleanItem = {
@@ -147,6 +235,9 @@ export default function AdminPage() {
       stock: form.stock,
       image: form.images[0] || form.image,
       images: form.images,
+      video: form.video,
+      videoId: form.videoId,
+      featured: form.featured,
       imageFit: form.imageFit,
     };
 
@@ -169,6 +260,9 @@ export default function AdminPage() {
       stock: item.stock,
       image: item.images?.[0] || item.image || '',
       images: item.images?.length ? item.images : item.image ? [item.image] : [],
+      video: item.video || '',
+      videoId: item.videoId || '',
+      featured: Boolean(item.featured),
       imageFit: item.imageFit || 'fit',
     });
     setEditingId(String(item._id || item.id));
@@ -229,12 +323,30 @@ export default function AdminPage() {
 
           <div className="admin-tabs">
             {tabs.map((item) => (
-              <button key={item.id} className={`admin-tab ${tab === item.id ? 'active' : ''}`} onClick={() => setTab(item.id)}>
+              <button key={item.id} className={`admin-tab ${tab === item.id ? 'active' : ''}`} onClick={() => { setTab(item.id); setAdminSearch(''); }}>
                 {item.icon}
                 {item.label}
               </button>
             ))}
           </div>
+
+          {tab !== 'dashboard' ? (
+            <div className="admin-search-bar">
+              <Search size={18} />
+              <input
+                className="form-input"
+                placeholder={`Search ${tab}...`}
+                value={adminSearch}
+                onChange={(event) => setAdminSearch(event.target.value)}
+              />
+              {adminSearch ? (
+                <button className="btn btn-outline btn-sm" type="button" onClick={() => setAdminSearch('')}>
+                  <X size={14} />
+                  Clear
+                </button>
+              ) : null}
+            </div>
+          ) : null}
 
           {tab === 'dashboard' ? (
             <section className="admin-grid">
@@ -264,6 +376,7 @@ export default function AdminPage() {
                     <option value="fill">Fill card</option>
                     <option value="zoom">Zoomed fill</option>
                   </select>
+                  <label className="admin-check"><input type="checkbox" checked={form.featured} onChange={(event) => setForm({ ...form, featured: event.target.checked })} /> Featured Product</label>
                   <label className="image-upload-box">
                     <input type="file" accept="image/*" multiple onChange={handleImageChange} style={{ display: 'none' }} />
                     <ImagePlus size={20} />
@@ -286,6 +399,28 @@ export default function AdminPage() {
                       ))}
                     </div>
                   ) : null}
+                  <label className="image-upload-box">
+                    <input type="file" accept="video/*" onChange={handleVideoChange} style={{ display: 'none' }} />
+                    <Video size={20} />
+                    <span>{form.video || form.videoId ? 'Change product video' : 'Upload product video'}</span>
+                  </label>
+                  {form.video ? (
+                    <div className="admin-video-preview-wrap">
+                      <video className="admin-video-preview" src={form.video} controls />
+                      <button className="btn btn-sm admin-danger" type="button" onClick={() => setForm({ ...form, video: '', videoId: '' })}>
+                        <Trash2 size={14} />
+                        Remove Video
+                      </button>
+                    </div>
+                  ) : form.videoId ? (
+                    <div className="status-banner status-info">
+                      Product video is linked. Upload a new video to replace it or remove it from this product.
+                      <button className="btn btn-sm admin-danger" type="button" onClick={() => setForm({ ...form, video: '', videoId: '' })} style={{ marginTop: '0.75rem' }}>
+                        <Trash2 size={14} />
+                        Remove Video
+                      </button>
+                    </div>
+                  ) : null}
                   <div className="admin-action-row">
                     <button className="btn btn-primary" type="submit">{editingId === null ? <Plus size={16} /> : <Save size={16} />}{editingId === null ? 'Add Product' : 'Save Product'}</button>
                     <button className="btn btn-outline" type="button" onClick={() => { setEditingId(null); setForm(EMPTY_FORM); }}><X size={16} />Clear</button>
@@ -296,11 +431,11 @@ export default function AdminPage() {
               <div className="theme-card">
                 <h2>Product List</h2>
                 <div className="admin-list">
-                  {loading ? <p>Loading products...</p> : sortedItems.map((item) => (
+                  {loading ? <p>Loading products...</p> : filteredItems.length === 0 ? <p>No products match your search.</p> : filteredItems.map((item) => (
                     <div className="admin-list-row" key={String(item._id || item.id)}>
                       <div>
                         <strong>{item.name}</strong>
-                        <span>{item.brand} / {item.subCategory} / {item.defaultPrice}</span>
+                        <span>{item.brand} / {item.subCategory} / {item.defaultPrice}{item.featured ? ' / Featured' : ''}</span>
                       </div>
                       <div className="admin-action-row">
                         <button className="btn btn-outline btn-sm" onClick={() => handleEdit(item)}>Edit</button>
@@ -317,18 +452,21 @@ export default function AdminPage() {
             <section className="theme-card">
               <h2>Orders</h2>
               <div className="admin-list">
-                {orders.length === 0 ? <p>No orders yet. Stripe or COD checkout creates pending orders here.</p> : orders.map((order) => (
+                {orders.length === 0 ? <p>No orders yet. Stripe or COD checkout creates pending orders here.</p> : filteredOrders.length === 0 ? <p>No orders match your search.</p> : filteredOrders.map((order) => (
                   <div className="admin-list-row" key={order.id}>
-                    <div>
+                    <PaymentStatusPanel order={order} view="admin" />
+                    <div className="admin-list-main">
                       <strong>{order.customerName} - Rs. {order.total.toLocaleString('en-PK')}</strong>
-                      <span>{order.customerEmail} / {order.customerPhone || 'No phone'} / {order.paymentMethod.toUpperCase()} / {new Date(order.createdAt).toLocaleString()}</span>
-                      <span>Subtotal: Rs. {(order.subtotal || order.total).toLocaleString('en-PK')} / Promo: {order.discountCode ? `${order.discountCode} (-Rs. ${(order.discountAmount || 0).toLocaleString('en-PK')})` : 'None'}</span>
+                      <span>{order.customerEmail} / {order.customerPhone || 'No phone'} / {order.paymentStatus} / {new Date(order.createdAt).toLocaleString()}</span>
+                      <span>Subtotal: Rs. {(order.subtotal || order.total).toLocaleString('en-PK')} / Delivery: Rs. {(order.deliveryCharge || 0).toLocaleString('en-PK')} / Promo: {order.discountCode ? `${order.discountCode} (-Rs. ${(order.discountAmount || 0).toLocaleString('en-PK')})` : 'None'}</span>
                       <span>{order.deliveryAddress || 'No address'}{order.deliveryCity ? `, ${order.deliveryCity}` : ''}</span>
                       <span>{order.items.map((item) => `${item.name} x${item.quantity}`).join(', ')}</span>
                     </div>
-                    <select className="form-input admin-select" value={order.status} onChange={(event) => handleOrderStatus(order.id, event.target.value as StoreOrder['status'])}>
-                      {['Pending', 'Paid', 'Processing', 'Completed', 'Cancelled'].map((status) => <option key={status}>{status}</option>)}
-                    </select>
+                    <div className="admin-order-controls">
+                      <select className="form-input admin-select" value={order.status} onChange={(event) => handleOrderStatus(order.id, event.target.value as StoreOrder['status'])}>
+                        {['Pending', 'Processing', 'Shipped', 'Completed', 'Cancelled'].map((status) => <option key={status}>{status}</option>)}
+                      </select>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -352,7 +490,7 @@ export default function AdminPage() {
               <div className="theme-card">
                 <h2>Discounts</h2>
                 <div className="admin-list">
-                  {discounts.length === 0 ? <p>No discounts created.</p> : discounts.map((discount) => (
+                  {discounts.length === 0 ? <p>No discounts created.</p> : filteredDiscounts.length === 0 ? <p>No promo codes match your search.</p> : filteredDiscounts.map((discount) => (
                     <div className="admin-list-row" key={discount.id}>
                       <div>
                         <strong>{discount.code}</strong>
@@ -373,7 +511,7 @@ export default function AdminPage() {
             <section className="theme-card">
               <h2>Users and Roles</h2>
               <div className="admin-list">
-                {users.map((user) => (
+                {filteredUsers.length === 0 ? <p>No users match your search.</p> : filteredUsers.map((user) => (
                   <div className="admin-list-row" key={user.id}>
                     <div>
                       <strong>{user.name}</strong>

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createOrder, getAllOrders, getOrdersByUser } from "@/lib/db/orders";
+import { sendOrderPlacedEmails } from "@/lib/email";
+import { STANDARD_DELIVERY_CHARGE } from "@/lib/ecommerce";
 
 export async function GET(request: Request) {
   try {
@@ -21,6 +23,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required order details." }, { status: 400 });
     }
 
+    if (body.items.length === 0) {
+      return NextResponse.json({ error: "Your cart is empty." }, { status: 400 });
+    }
+
+    const paymentMethod = body.paymentMethod === "stripe" || body.paymentMethod === "cod" || body.paymentMethod === "manual"
+      ? body.paymentMethod
+      : "manual";
+    const subtotal = Number(body.subtotal) || Math.max(0, Number(body.total) - STANDARD_DELIVERY_CHARGE) || 0;
+    const discountAmount = Number(body.discountAmount) || 0;
+    const deliveryCharge = Number(body.deliveryCharge) || STANDARD_DELIVERY_CHARGE;
+    const total = Number(body.total) || Math.max(0, subtotal - discountAmount) + deliveryCharge;
+
     const order = await createOrder({
       userId: body.userId,
       customerName: body.customerName,
@@ -29,13 +43,21 @@ export async function POST(request: Request) {
       deliveryAddress: body.deliveryAddress,
       deliveryCity: body.deliveryCity,
       items: body.items,
-      subtotal: Number(body.subtotal) || Number(body.total) || 0,
+      subtotal,
       discountCode: body.discountCode || "",
-      discountAmount: Number(body.discountAmount) || 0,
-      total: Number(body.total) || 0,
-      paymentMethod: body.paymentMethod,
-      status: body.status || "Pending",
+      discountAmount,
+      deliveryCharge,
+      total,
+      paymentMethod,
+      paymentStatus: paymentMethod === "cod" ? "COD" : "Online Pending",
+      status: "Pending",
     });
+
+    try {
+      await sendOrderPlacedEmails(order);
+    } catch (emailError) {
+      console.error("Unable to send order email:", emailError);
+    }
 
     return NextResponse.json({ order }, { status: 201 });
   } catch (error) {

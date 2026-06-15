@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { STANDARD_DELIVERY_CHARGE } from "@/lib/ecommerce";
 import { getStripe, parseRupeeAmount } from "@/lib/stripe";
 
 type CheckoutItem = {
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
     const subtotal = items.reduce((sum, item) => {
       return sum + parseRupeeAmount(item.defaultPrice) * Math.max(1, Number(item.quantity) || 1);
     }, 0);
-    const checkoutTotal = requestedTotal > 0 ? requestedTotal : subtotal;
+    const checkoutTotal = requestedTotal > 0 ? requestedTotal : subtotal + STANDARD_DELIVERY_CHARGE;
 
     if (checkoutTotal <= 0) {
       return NextResponse.json({ error: "Checkout total must be greater than zero." }, { status: 400 });
@@ -51,8 +52,8 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
-      success_url: `${origin}/store?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/store?stripe=cancelled`,
+      success_url: `${origin}/checkout?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout?stripe=cancelled`,
       metadata: {
         source: "hammad-batteries-cart",
       },

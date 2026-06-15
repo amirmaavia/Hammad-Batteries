@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchItemById } from '@/store/itemsSlice';
 import { cartStore } from '@/lib/cart';
+import ProductVideoPopup from '@/components/ProductVideoPopup';
 
 function ItemImage({ item }: { item: CatalogItem }) {
   const images = getProductImages(item);
@@ -86,13 +87,14 @@ export default function ItemDetailPage() {
 
   const handleAddToCart = () => {
     if (!item) return;
-    cartStore.addItem({
+    const addedToCart = cartStore.addItem({
       _id: String(item._id || item.id),
       name: item.name,
       brand: item.brand,
       defaultPrice: item.defaultPrice,
       image: getPrimaryProductImage(item),
     });
+    if (!addedToCart) return;
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -168,6 +170,7 @@ export default function ItemDetailPage() {
                       <ShoppingCart size={18} />
                       {added ? 'Added to Cart' : 'Add to Cart'}
                     </button>
+                    <ProductVideoPopup video={item.video} videoId={item.videoId} productName={item.name} buttonClassName="btn btn-outline" />
                     <Link href="/admin" className="btn btn-outline">
                       View in Admin
                     </Link>

@@ -1,5 +1,7 @@
 import type { CartItem } from "./cart";
 
+export const STANDARD_DELIVERY_CHARGE = 300;
+
 export type UserRole = "user" | "admin";
 
 export type StoreUser = {
@@ -25,10 +27,14 @@ export type StoreOrder = {
   subtotal?: number;
   discountCode?: string;
   discountAmount?: number;
+  deliveryCharge?: number;
   total: number;
   paymentMethod: "stripe" | "cod" | "manual";
-  status: "Pending" | "Paid" | "Processing" | "Completed" | "Cancelled";
+  paymentStatus: "COD" | "Online Pending" | "Online Paid";
+  stripePaymentId?: string;
+  status: "Pending" | "Processing" | "Shipped" | "Completed" | "Cancelled";
   createdAt: string;
+  shippedAt?: string;
 };
 
 export type StoreDiscount = {
@@ -84,6 +90,43 @@ export function getCurrentUser() {
   return user;
 }
 
+export async function restoreCurrentUserFromCookie() {
+  if (typeof window === "undefined") return null;
+
+  const cachedUser = getCurrentUser();
+
+  try {
+    const response = await fetch("/api/auth/me", { credentials: "include" });
+
+    if (!response.ok) {
+      localStorage.removeItem(SESSION_KEY);
+      if (cachedUser) {
+        window.dispatchEvent(new Event("auth-update"));
+      }
+      return null;
+    }
+
+    const result = await response.json();
+    const user = result.user as StoreUser | null;
+
+    if (!user?.id) {
+      localStorage.removeItem(SESSION_KEY);
+      if (cachedUser) {
+        window.dispatchEvent(new Event("auth-update"));
+      }
+      return null;
+    }
+
+    write(SESSION_KEY, user);
+    if (cachedUser?.id !== user.id) {
+      window.dispatchEvent(new Event("auth-update"));
+    }
+    return user;
+  } catch {
+    return getCurrentUser();
+  }
+}
+
 export async function getUsers() {
   const response = await fetch("/api/users");
   if (!response.ok) {
@@ -129,9 +172,18 @@ export async function loginUser(email: string, password: string) {
   return result.user as StoreUser;
 }
 
-export function logoutUser() {
+export async function logoutUser() {
   localStorage.removeItem(SESSION_KEY);
   window.dispatchEvent(new Event("auth-update"));
+
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // Local logout already happened; the server cookie will expire naturally if this request fails.
+  }
 }
 
 export async function updateUserRole(userId: string, role: UserRole) {

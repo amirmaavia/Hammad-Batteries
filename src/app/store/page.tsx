@@ -66,13 +66,14 @@ function StoreContent() {
 
   const handleAddToCart = (e: React.MouseEvent, item: CatalogItem) => {
     e.stopPropagation();
-    cartStore.addItem({
+    const addedToCart = cartStore.addItem({
       _id: String(item._id || item.id),
       name: item.name,
       brand: item.brand,
       defaultPrice: item.defaultPrice,
       image: getPrimaryProductImage(item),
     });
+    if (!addedToCart) return;
     setAddedId(String(item._id || item.id));
     setTimeout(() => setAddedId(null), 1500);
   };

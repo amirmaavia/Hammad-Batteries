@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AUTH_COOKIE_NAME, authCookieOptions, createAuthToken } from "@/lib/auth";
 import { loginUserByPassword } from "@/lib/db/users";
 
 export async function POST(request: Request) {
@@ -12,7 +13,9 @@ export async function POST(request: Request) {
     }
 
     const user = await loginUserByPassword(email, password);
-    return NextResponse.json({ user });
+    const response = NextResponse.json({ user });
+    response.cookies.set(AUTH_COOKIE_NAME, createAuthToken(user), authCookieOptions());
+    return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to login.";
     return NextResponse.json({ error: message }, { status: 401 });

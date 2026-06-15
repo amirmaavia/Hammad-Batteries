@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AUTH_COOKIE_NAME, authCookieOptions, createAuthToken } from "@/lib/auth";
 import { createUser } from "@/lib/db/users";
 
 export async function POST(request: Request) {
@@ -13,7 +14,9 @@ export async function POST(request: Request) {
     }
 
     const user = await createUser(name, email, password);
-    return NextResponse.json({ user }, { status: 201 });
+    const response = NextResponse.json({ user }, { status: 201 });
+    response.cookies.set(AUTH_COOKIE_NAME, createAuthToken(user), authCookieOptions());
+    return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to create account.";
     return NextResponse.json({ error: message }, { status: 400 });

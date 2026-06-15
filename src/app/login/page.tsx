@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { LockKeyhole } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { loginUser } from '@/lib/ecommerce';
+import { loginUser, restoreCurrentUserFromCookie } from '@/lib/ecommerce';
 
 function LoginContent() {
   const router = useRouter();
@@ -15,6 +15,21 @@ function LoginContent() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    let mounted = true;
+
+    void restoreCurrentUserFromCookie().then((user) => {
+      if (!mounted || !user) return;
+
+      const next = searchParams.get('next');
+      router.replace(next?.startsWith('/') ? next : user.role === 'admin' ? '/admin' : '/store');
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [router, searchParams]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
@@ -22,7 +37,7 @@ function LoginContent() {
     try {
       const user = await loginUser(email, password);
       const next = searchParams.get('next');
-      router.push(next === 'cart' ? '/store' : user.role === 'admin' ? '/admin' : '/store');
+      router.push(next?.startsWith('/') ? next : next === 'cart' ? '/store' : user.role === 'admin' ? '/admin' : '/store');
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'Unable to login.');
     }
