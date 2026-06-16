@@ -1,9 +1,48 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { StoreProvider } from "@/store/StoreProvider";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://hammadbatteries.com";
+
 export const metadata: Metadata = {
-  title: "Hammad Batteries",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Hammad Batteries",
+    template: "%s | Hammad Batteries",
+  },
   description: "Premium mobile batteries for Samsung, Apple, and more. Auto-updated latest models available at Hammad Batteries.",
+  keywords: [
+    "Hammad Batteries",
+    "mobile batteries Pakistan",
+    "phone battery shop",
+    "Samsung battery",
+    "iPhone battery",
+    "mobile accessories",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Hammad Batteries",
+    description: "Premium mobile batteries and accessories for Samsung, Apple, and more.",
+    url: "/",
+    siteName: "Hammad Batteries",
+    type: "website",
+    images: [
+      {
+        url: "/icon.png",
+        width: 512,
+        height: 512,
+        alt: "Hammad Batteries",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Hammad Batteries",
+    description: "Premium mobile batteries and accessories for Samsung, Apple, and more.",
+    images: ["/icon.png"],
+  },
   icons: {
     icon: "/icon.png",
     apple: "/icon.png",

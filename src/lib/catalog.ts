@@ -8,6 +8,9 @@ export type CatalogItem = {
   brand: string;
   subCategory: string;
   description?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
   defaultPrice: string;
   originalPrice: string;
   stock: string;
@@ -26,6 +29,9 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     brand: "Samsung",
     subCategory: "S Series",
     description: "",
+    seoTitle: "",
+    seoDescription: "",
+    seoKeywords: "",
     originalPrice: "",
     defaultPrice: "Rs. 14,999",
     stock: "In Stock",
@@ -42,6 +48,9 @@ export const DEFAULT_ITEMS: CatalogItem[] = [
     brand: "Samsung",
     subCategory: "Note Series",
     description: "",
+    seoTitle: "",
+    seoDescription: "",
+    seoKeywords: "",
     originalPrice: "Rs. 10,500",
     defaultPrice: "Rs. 10,500",
     stock: "In Stock",
@@ -106,6 +115,9 @@ export async function saveCatalogItems(items: CatalogItem): Promise<boolean> {
             brand: items.brand,
             subCategory: items.subCategory,
             description: items.description || "",
+            seoTitle: items.seoTitle || "",
+            seoDescription: items.seoDescription || "",
+            seoKeywords: items.seoKeywords || "",
             defaultPrice: items.defaultPrice,
             originalPrice: items.originalPrice,
             stock: items.stock,
@@ -131,6 +143,9 @@ export async function saveCatalogItems(items: CatalogItem): Promise<boolean> {
             brand: items.brand,
             subCategory: items.subCategory,
             description: items.description || "",
+            seoTitle: items.seoTitle || "",
+            seoDescription: items.seoDescription || "",
+            seoKeywords: items.seoKeywords || "",
             defaultPrice: items.defaultPrice,
             originalPrice: items.originalPrice,
             stock: items.stock,

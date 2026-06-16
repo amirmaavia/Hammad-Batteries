@@ -20,6 +20,9 @@ type ItemForm = {
   brand: string;
   subCategory: string;
   description: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string;
   defaultPrice: string;
   originalPrice: string;
   stock: string;
@@ -36,6 +39,9 @@ const EMPTY_FORM: ItemForm = {
   brand: '',
   subCategory: '',
   description: '',
+  seoTitle: '',
+  seoDescription: '',
+  seoKeywords: '',
   defaultPrice: '',
   originalPrice: '',
   stock: 'In Stock',
@@ -102,6 +108,9 @@ export default function AdminPage() {
       item.brand,
       item.subCategory,
       item.description,
+      item.seoTitle,
+      item.seoDescription,
+      item.seoKeywords,
       item.defaultPrice,
       item.originalPrice,
       item.stock,
@@ -230,6 +239,9 @@ export default function AdminPage() {
       brand: form.brand.trim(),
       subCategory: form.subCategory.trim(),
       description: form.description.trim(),
+      seoTitle: form.seoTitle.trim(),
+      seoDescription: form.seoDescription.trim(),
+      seoKeywords: form.seoKeywords.trim(),
       defaultPrice: form.defaultPrice.trim(),
       originalPrice: form.originalPrice.trim() || form.defaultPrice.trim(),
       stock: form.stock,
@@ -255,6 +267,9 @@ export default function AdminPage() {
       brand: item.brand,
       subCategory: item.subCategory,
       description: item.description || '',
+      seoTitle: item.seoTitle || '',
+      seoDescription: item.seoDescription || '',
+      seoKeywords: item.seoKeywords || '',
       defaultPrice: item.defaultPrice,
       originalPrice: item.originalPrice || item.defaultPrice,
       stock: item.stock,
@@ -364,6 +379,9 @@ export default function AdminPage() {
                 <form onSubmit={handleSubmit} className="admin-form">
                   <input className="form-input" placeholder="Product name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
                   <textarea className="form-input" placeholder="Description" rows={4} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
+                  <input className="form-input" placeholder="SEO title (optional)" value={form.seoTitle} onChange={(event) => setForm({ ...form, seoTitle: event.target.value })} />
+                  <textarea className="form-input" placeholder="SEO description (optional)" rows={3} value={form.seoDescription} onChange={(event) => setForm({ ...form, seoDescription: event.target.value })} />
+                  <input className="form-input" placeholder="SEO keywords, comma separated (optional)" value={form.seoKeywords} onChange={(event) => setForm({ ...form, seoKeywords: event.target.value })} />
                   <div className="admin-form-grid">
                     <input className="form-input" placeholder="Brand" value={form.brand} onChange={(event) => setForm({ ...form, brand: event.target.value })} />
                     <input className="form-input" placeholder="Category" value={form.subCategory} onChange={(event) => setForm({ ...form, subCategory: event.target.value })} />

@@ -6,6 +6,9 @@ export interface CatalogItemSchema {
   brand: string;
   subCategory: string;
   description?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
   originalPrice: string;
   defaultPrice: string;
   stock: string;
@@ -28,6 +31,9 @@ export const catalogItemSchema = {
     brand: { bsonType: "string", description: "Brand name" },
     subCategory: { bsonType: "string", description: "Sub category" },
     description: { bsonType: "string", description: "Product description" },
+    seoTitle: { bsonType: "string", description: "SEO title" },
+    seoDescription: { bsonType: "string", description: "SEO meta description" },
+    seoKeywords: { bsonType: "string", description: "SEO keywords" },
     originalPrice: { bsonType: "string", description: "Original price in Rs." },
     defaultPrice: { bsonType: "string", description: "Default price in Rs." },
     stock: { bsonType: "string", description: "Stock status" },
