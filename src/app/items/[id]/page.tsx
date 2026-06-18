@@ -78,6 +78,7 @@ export default function ItemDetailPage() {
   const { items, loading } = useAppSelector((state) => state.items);
   const item = items.find((currentItem) => String(currentItem._id || currentItem.id) === itemId);
   const [added, setAdded] = useState(false);
+  const [stockMessage, setStockMessage] = useState('');
 
   useEffect(() => {
     if (!item) {
@@ -87,6 +88,12 @@ export default function ItemDetailPage() {
 
   const handleAddToCart = () => {
     if (!item) return;
+    if (item.stock === 'Out of Stock') {
+      setStockMessage('This product is out of stock. Please check again after 2 days.');
+      setTimeout(() => setStockMessage(''), 3000);
+      return;
+    }
+
     const addedToCart = cartStore.addItem({
       _id: String(item._id || item.id),
       name: item.name,
@@ -166,15 +173,16 @@ export default function ItemDetailPage() {
                   </div>
 
                   <div className="product-detail-actions">
-                    <button className={`btn ${added ? 'btn-success' : 'btn-primary'}`} onClick={handleAddToCart}>
+                    <button className={`btn ${added ? 'btn-success' : item.stock === 'Out of Stock' ? 'btn-outline product-out-stock-btn' : 'btn-primary'}`} onClick={handleAddToCart}>
                       <ShoppingCart size={18} />
-                      {added ? 'Added to Cart' : 'Add to Cart'}
+                      {added ? 'Added to Cart' : item.stock === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
                     </button>
                     <ProductVideoPopup video={item.video} videoId={item.videoId} productName={item.name} buttonClassName="btn btn-outline" />
                     <Link href="/admin" className="btn btn-outline">
                       View in Admin
                     </Link>
                   </div>
+                  {stockMessage ? <p className="product-stock-message product-detail-stock-message">{stockMessage}</p> : null}
                 </div>
               </div>
             ) : (

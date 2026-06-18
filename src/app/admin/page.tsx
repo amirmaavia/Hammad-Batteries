@@ -8,6 +8,7 @@ import { Boxes, ImagePlus, LayoutDashboard, Percent, Plus, Save, Search, Shield,
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PaymentStatusPanel from '@/components/PaymentStatusPanel';
+import OrderSlipButton from '@/components/OrderSlipButton';
 import type { CatalogItem } from '@/lib/catalog';
 import { deleteDiscount, getCurrentUser, getDiscounts, getOrders, getUsers, restoreCurrentUserFromCookie, saveDiscount, updateDiscount, updateOrderStatus, updateUserRole, type StoreDiscount, type StoreOrder, type StoreUser, type UserRole } from '@/lib/ecommerce';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -481,6 +482,8 @@ export default function AdminPage() {
                       <span>{order.items.map((item) => `${item.name} x${item.quantity}`).join(', ')}</span>
                     </div>
                     <div className="admin-order-controls">
+                      <OrderSlipButton order={order} />
+                      <OrderSlipButton order={order} variant="print" />
                       <select className="form-input admin-select" value={order.status} onChange={(event) => handleOrderStatus(order.id, event.target.value as StoreOrder['status'])}>
                         {['Pending', 'Processing', 'Shipped', 'Completed', 'Cancelled'].map((status) => <option key={status}>{status}</option>)}
                       </select>

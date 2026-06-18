@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { StoreProvider } from "@/store/StoreProvider";
+import GlobalApiLoader from "@/components/Loader/loader";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://hammadbatteries.com";
 
@@ -71,7 +72,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <StoreProvider>{children}</StoreProvider>
+        <StoreProvider>
+          <GlobalApiLoader />
+          {children}
+        </StoreProvider>
       </body>
     </html>
   );

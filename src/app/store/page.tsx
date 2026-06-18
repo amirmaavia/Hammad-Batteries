@@ -66,6 +66,8 @@ function StoreContent() {
 
   const handleAddToCart = (e: React.MouseEvent, item: CatalogItem) => {
     e.stopPropagation();
+    if (item.stock === 'Out of Stock') return;
+
     const addedToCart = cartStore.addItem({
       _id: String(item._id || item.id),
       name: item.name,

@@ -364,11 +364,11 @@ export default function CheckoutPageClient() {
                   <Banknote size={18} />
                   <span><strong>Cash on Delivery</strong><small>Pay when your order is delivered.</small></span>
                 </label>
-                <label className={`cart-payment-option ${paymentMethod === 'stripe' ? 'active' : ''}`}>
+                {/* <label className={`cart-payment-option ${paymentMethod === 'stripe' ? 'active' : ''}`}>
                   <input type="radio" name="paymentMethod" value="stripe" checked={paymentMethod === 'stripe'} onChange={() => setPaymentMethod('stripe')} />
                   <CreditCard size={18} />
                   <span><strong>Online Payment</strong><small>Pay securely with card checkout.</small></span>
-                </label>
+                </label> */}
               </div>
 
               {stripeMessage ? <div className="checkout-status status-error">{stripeMessage}</div> : null}

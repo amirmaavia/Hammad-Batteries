@@ -6,6 +6,7 @@ import { PackageCheck, ShoppingBag } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PaymentStatusPanel from '@/components/PaymentStatusPanel';
+import OrderSlipButton from '@/components/OrderSlipButton';
 import { getCurrentUser, getOrders, restoreCurrentUserFromCookie, type StoreOrder, type StoreUser } from '@/lib/ecommerce';
 
 export default function OrdersPage() {
@@ -63,6 +64,7 @@ export default function OrdersPage() {
                     <span>{new Date(order.createdAt).toLocaleString()}</span>
                   </div>
                   <div className="order-tag-row">
+                    <OrderSlipButton order={order} />
                     <span className={`order-status order-status-${order.status.toLowerCase()}`}>{order.status}</span>
                   </div>
                 </div>

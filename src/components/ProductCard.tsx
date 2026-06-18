@@ -30,7 +30,9 @@ export default function ProductCard({
   const id = String(item._id || item.id);
   const detailHref = `/items/${id}`;
   const [localAdded, setLocalAdded] = useState(false);
+  const [stockMessage, setStockMessage] = useState('');
   const primaryImage = getPrimaryProductImage(item);
+  const isOutOfStock = item.stock === 'Out of Stock';
 
   const openDetail = () => {
     router.push(detailHref);
@@ -38,6 +40,12 @@ export default function ProductCard({
 
   const addToCart = (event: MouseEvent) => {
     event.stopPropagation();
+
+    if (isOutOfStock) {
+      setStockMessage('This product is out of stock. Please check again after 2 days.');
+      setTimeout(() => setStockMessage(''), 3000);
+      return;
+    }
 
     if (onAddToCart) {
       onAddToCart(event, item);
@@ -114,15 +122,16 @@ export default function ProductCard({
         </span>
 
         <button
-          className={`btn btn-sm ${added ? 'btn-success' : 'btn-outline'}`}
+          className={`btn btn-sm ${added ? 'btn-success' : isOutOfStock ? 'btn-outline product-out-stock-btn' : 'btn-outline'}`}
           style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
           onClick={addToCart}
-          title="Add to Cart"
+          title={isOutOfStock ? 'Out of stock' : 'Add to Cart'}
         >
           <ShoppingCart size={14} />
-          <span className="btn-text">{added ? 'Added' : 'Add'}</span>
+          <span className="btn-text">{added ? 'Added' : isOutOfStock ? 'Unavailable' : 'Add'}</span>
         </button>
       </div>
+      {stockMessage ? <p className="product-stock-message">{stockMessage}</p> : null}
     </div>
   );
 }
